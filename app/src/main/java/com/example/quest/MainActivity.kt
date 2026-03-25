@@ -44,16 +44,17 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun QuestApp() {
     val challenges = listOf(
-        "Drink a glass of water",
-        "Take a 10 minute walk",
-        "Read 5 pages",
-        "Do 10 push-ups",
-        "Stretch for 5 minutes"
+        Challenge("Drink a glass of water",5, StatType.HEALTH),
+        Challenge("Take a 10 minute walk",10,StatType.HEALTH),
+        Challenge("Read 5 pages",10,StatType.WISDOM),
+        Challenge("Do 10 push-ups", 15, StatType.STRENGTH),
+        Challenge("Stretch for 5 minuites",8,StatType.DISCIPLINE),
+        Challenge("Compliment someone", 7, StatType.CHARISMA)
     )
 
 
     var currentChallenge by remember {
-        mutableStateOf("Loading today's challenge ...")
+        mutableStateOf<Challenge?>(null)
     }
 
     var status by remember {
@@ -72,10 +73,22 @@ fun QuestApp() {
         val todayString = today.toString()
 
         val savedDate = sharedPreferences.getString("date", "") ?:""
-        val savedChallenge = sharedPreferences.getString("challenge", "") ?: ""
+        val savedTitle = sharedPreferences.getString("challengeTitle", "") ?:""
+        val savedXp = sharedPreferences.getInt("challengeXp", 0)
+        val savedStatTypeString = sharedPreferences.getString("challengeStatType", "WISDOM") ?: "WISDOM"
         val savedStatus = sharedPreferences.getString("status", "Not completed yet") ?: "Not completed yet"
         val savedStreak = sharedPreferences.getInt("streak",0)
         val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate","") ?:""
+
+        val savedChallenge = if (savedTitle.isNotEmpty()){
+            Challenge(
+                title = savedTitle,
+                xp = savedXp,
+                statType = StatType.valueOf(savedStatTypeString)
+            )
+        }else{
+            null
+        }
 
         streak = savedStreak
 
@@ -92,7 +105,7 @@ fun QuestApp() {
             }
         }
 
-        if (savedDate == todayString && savedChallenge.isNotEmpty()){
+        if (savedDate == todayString && savedChallenge != null){
             currentChallenge = savedChallenge
             status = savedStatus
         }else{
@@ -102,7 +115,9 @@ fun QuestApp() {
 
             sharedPreferences.edit {
                 putString("date", todayString)
-                    .putString("challenge", newChallenge)
+                    .putString("challengeTitle", newChallenge.title)
+                    .putInt("challengeXp",newChallenge.xp)
+                    .putString("challengeStatType", newChallenge.statType.name)
                     .putString("status", status)
             }
         }
@@ -142,7 +157,20 @@ fun QuestApp() {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = currentChallenge,
+                    text = currentChallenge?.title ?: "Loading today's quest",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Reward: ${currentChallenge?.xp ?: 0} XP",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Stat: ${currentChallenge?.statType?.name ?: "NONE"}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -183,6 +211,11 @@ fun QuestApp() {
             val today = LocalDate.now()
             val todayString = today.toString()
             val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate", "") ?:""
+            val challenge = currentChallenge
+            if (challenge != null){
+                //xp
+                //statType
+            }
 
             if (status != "Completed!"){
                 if (savedLastCompletedDate.isEmpty()){
@@ -214,7 +247,7 @@ fun QuestApp() {
         ) {
             Text(
                 text = "Mark Complete",
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
