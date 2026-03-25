@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import java.time.LocalDate
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,29 +52,51 @@ fun QuestApp() {
         mutableStateOf("Not completed yet")
     }
 
+    var streak by remember{
+        mutableStateOf(0)
+    }
+
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("daily_challenge_prefs", Context.MODE_PRIVATE)
 
     LaunchedEffect(Unit) {
-        val today = LocalDate.now().toString()
+        val today = LocalDate.now()
+        val todayString = today.toString()
 
         val savedDate = sharedPreferences.getString("date", "") ?:""
         val savedChallenge = sharedPreferences.getString("challenge", "") ?: ""
-        val savedSatus = sharedPreferences.getString("status", "Not completed yet") ?: "Not completed yet"
+        val savedStatus = sharedPreferences.getString("status", "Not completed yet") ?: "Not completed yet"
+        val savedStreak = sharedPreferences.getInt("streak",0)
+        val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate","") ?:""
 
-        if (savedDate == today && savedChallenge.isNotEmpty()){
+        streak = savedStreak
+
+        val lastCompletedDate = if (savedLastCompletedDate.isNotEmpty()){
+            LocalDate.parse(savedLastCompletedDate)
+        }else{
+            null
+        }
+
+        if (lastCompletedDate != null && lastCompletedDate.isBefore(today.minusDays(1)) && savedStatus != "Completed!"){
+            streak = 0
+            sharedPreferences.edit {
+                putInt("streak", streak)
+            }
+        }
+
+        if (savedDate == todayString && savedChallenge.isNotEmpty()){
             currentChallenge = savedChallenge
-            status = savedSatus
+            status = savedStatus
         }else{
             val newChallenge = challenges.random()
             currentChallenge = newChallenge
             status = "Not completed yet"
 
-            sharedPreferences.edit()
-                .putString("date",today)
-                .putString("challenge",newChallenge)
-                .putString("status",status)
-                .apply()
+            sharedPreferences.edit {
+                putString("date", todayString)
+                    .putString("challenge", newChallenge)
+                    .putString("status", status)
+            }
         }
     }
     Column(
@@ -92,10 +115,31 @@ fun QuestApp() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            status = "Completed!"
-            sharedPreferences.edit()
-                .putString("status",status)
-                .apply()
+            val today = LocalDate.now()
+            val todayString = today.toString()
+            val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate", "") ?:""
+
+            if (status != "Completed!"){
+                if (savedLastCompletedDate.isEmpty()){
+                    streak = 1
+                }else{
+                    val lastCompletedDate = LocalDate.parse(savedLastCompletedDate)
+
+                    streak = when{
+                        lastCompletedDate == today -> streak
+                        lastCompletedDate == today.minusDays(1) -> streak + 1
+                        else -> 1
+                    }
+                }
+                status = "Completed!"
+
+                sharedPreferences.edit {
+                    putString("status", status)
+                        .putInt("streak", streak)
+                        .putString("lastCompletedDate", todayString)
+                }
+            }
+
         }) {
             Text("Mark Complete")
         }
@@ -103,9 +147,9 @@ fun QuestApp() {
 
         Button(onClick = {
             status = "Not completed"
-            sharedPreferences.edit()
-                .putString("status",status)
-                .apply()
+            sharedPreferences.edit {
+                putString("status", status)
+            }
         }) {
             Text("Mark Not Complete")
         }
@@ -113,6 +157,7 @@ fun QuestApp() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text("Status: $status")
+        Text("Current streak: $streak")
     }
 }
 
