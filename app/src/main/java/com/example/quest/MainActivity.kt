@@ -26,8 +26,21 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import com.example.quest.ui.theme.QuestTheme
+import kotlinx.coroutines.launch
+import androidx.compose.material3.Icon
+import androidx.compose.material3.TopAppBarDefaults
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,14 +56,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun QuestApp() {
-    val challenges = listOf(
-        Challenge("Drink a glass of water",5, StatType.HEALTH),
-        Challenge("Take a 10 minute walk",10,StatType.HEALTH),
-        Challenge("Read 5 pages",10,StatType.WISDOM),
-        Challenge("Do 10 push-ups", 15, StatType.STRENGTH),
-        Challenge("Stretch for 5 minuites",8,StatType.DISCIPLINE),
-        Challenge("Compliment someone", 7, StatType.CHARISMA)
-    )
+    val challenges = ChallengeRepo.challenges
 
 
     var currentChallenge by remember {
@@ -135,10 +141,81 @@ fun QuestApp() {
 
             sharedPreferences.edit {
                 putString("date", todayString)
-                    .putString("challengeTitle", newChallenge.title)
-                    .putInt("challengeXp",newChallenge.xp)
-                    .putString("challengeStatType", newChallenge.statType.name)
-                    .putString("status", status)
+                putString("challengeTitle", newChallenge.title)
+                putInt("challengeXp",newChallenge.xp)
+                putString("challengeStatType", newChallenge.statType.name)
+                putString("status", status)
+            }
+        }
+    }
+
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Text(
+                    text = "Quest Menu",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                NavigationDrawerItem(
+                    label = {Text("Home")},
+                    selected = true,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                    }
+                )
+                NavigationDrawerItem(
+                    label = {Text("Stats")},
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                    }
+                )
+                NavigationDrawerItem(
+                    label = {Text("Settings")},
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                    }
+                )
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text("Quest")
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = {
+                                scope.launch { drawerState.open() }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Open menu"
+                            )
+                        }
+                    }
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(innerPadding)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
             }
         }
     }
