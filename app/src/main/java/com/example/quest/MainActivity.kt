@@ -64,6 +64,12 @@ fun QuestApp() {
     var streak by remember{
         mutableStateOf(0)
     }
+    var totalXp by remember { mutableStateOf(0) }
+    var strengthXp by remember { mutableStateOf(0) }
+    var wisdomXp by remember { mutableStateOf(0) }
+    var healthXp by remember { mutableStateOf(0) }
+    var disciplineXp by remember { mutableStateOf(0) }
+    var charismaXp by remember { mutableStateOf(0) }
 
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("daily_challenge_prefs", Context.MODE_PRIVATE)
@@ -79,6 +85,20 @@ fun QuestApp() {
         val savedStatus = sharedPreferences.getString("status", "Not completed yet") ?: "Not completed yet"
         val savedStreak = sharedPreferences.getInt("streak",0)
         val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate","") ?:""
+
+        val savedTotalXp = sharedPreferences.getInt("totalXp", 0)
+        val savedStrengthXp = sharedPreferences.getInt("strengthXp", 0)
+        val savedWisdomXp = sharedPreferences.getInt("wisdomXp", 0)
+        val savedHealthXp = sharedPreferences.getInt("healthXp", 0)
+        val savedDisciplineXp = sharedPreferences.getInt("disciplineXp", 0)
+        val savedCharismaXp = sharedPreferences.getInt("charismaXp",0)
+
+        totalXp = savedTotalXp
+        strengthXp = savedStrengthXp
+        wisdomXp = savedWisdomXp
+        healthXp = savedHealthXp
+        disciplineXp = savedDisciplineXp
+        charismaXp = savedCharismaXp
 
         val savedChallenge = if (savedTitle.isNotEmpty()){
             Challenge(
@@ -203,6 +223,27 @@ fun QuestApp() {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Total XP",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "$totalXp XP",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text("Strength: $strengthXp", color = MaterialTheme.colorScheme.onSurface)
+            Text("Wisdom: $wisdomXp", color = MaterialTheme.colorScheme.onSurface)
+            Text("Health: $healthXp", color = MaterialTheme.colorScheme.onSurface)
+            Text("Discipline: $disciplineXp", color = MaterialTheme.colorScheme.onSurface)
+            Text("Charisma: $charismaXp", color = MaterialTheme.colorScheme.onSurface)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -212,12 +253,18 @@ fun QuestApp() {
             val todayString = today.toString()
             val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate", "") ?:""
             val challenge = currentChallenge
-            if (challenge != null){
-                //xp
-                //statType
-            }
+            if(status != "Completed!") {
+                if (challenge != null) {
+                    totalXp += challenge.xp
 
-            if (status != "Completed!"){
+                    when(challenge.statType){
+                        StatType.STRENGTH -> strengthXp += challenge.xp
+                        StatType.WISDOM -> wisdomXp += challenge.xp
+                        StatType.HEALTH -> healthXp += challenge.xp
+                        StatType.DISCIPLINE -> disciplineXp += challenge.xp
+                        StatType.CHARISMA -> charismaXp += challenge.xp
+                    }
+                }
                 if (savedLastCompletedDate.isEmpty()){
                     streak = 1
                 }else{
@@ -233,11 +280,17 @@ fun QuestApp() {
 
                 sharedPreferences.edit {
                     putString("status", status)
-                        .putInt("streak", streak)
-                        .putString("lastCompletedDate", todayString)
+                    putInt("streak", streak)
+                    putString("lastCompletedDate", todayString)
+
+                    putInt("totalXp",totalXp)
+                    putInt("strengthXp",strengthXp)
+                    putInt("wisdomXp", wisdomXp)
+                    putInt("healthXp",healthXp)
+                    putInt("disciplineXp",disciplineXp)
+                    putInt("charismaXp", charismaXp)
                 }
             }
-
         },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
@@ -263,7 +316,5 @@ fun QuestApp() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Status: $status")
-        Text("Current streak: $streak")
     }
 }
