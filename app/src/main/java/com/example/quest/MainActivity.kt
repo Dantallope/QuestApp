@@ -1,5 +1,7 @@
 package com.example.quest
 
+
+import androidx.compose.material3.ExperimentalMaterial3Api
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -42,6 +44,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TopAppBarDefaults
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,8 +57,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestApp() {
+
     val challenges = ChallengeRepo.challenges
 
 
@@ -67,7 +72,7 @@ fun QuestApp() {
         mutableStateOf("Not completed yet")
     }
 
-    var streak by remember{
+    var streak by remember {
         mutableStateOf(0)
     }
     var totalXp by remember { mutableStateOf(0) }
@@ -78,26 +83,28 @@ fun QuestApp() {
     var charismaXp by remember { mutableStateOf(0) }
 
     val context = LocalContext.current
-    val sharedPreferences = context.getSharedPreferences("daily_challenge_prefs", Context.MODE_PRIVATE)
+    val sharedPreferences =
+        context.getSharedPreferences("daily_challenge_prefs", Context.MODE_PRIVATE)
 
     LaunchedEffect(Unit) {
         val today = LocalDate.now()
         val todayString = today.toString()
 
-        val savedDate = sharedPreferences.getString("date", "") ?:""
-        val savedTitle = sharedPreferences.getString("challengeTitle", "") ?:""
+        val savedDate = sharedPreferences.getString("date", "") ?: ""
+        val savedTitle = sharedPreferences.getString("challengeTitle", "") ?: ""
         val savedXp = sharedPreferences.getInt("challengeXp", 0)
-        val savedStatTypeString = sharedPreferences.getString("challengeStatType", "WISDOM") ?: "WISDOM"
-        val savedStatus = sharedPreferences.getString("status", "Not completed yet") ?: "Not completed yet"
-        val savedStreak = sharedPreferences.getInt("streak",0)
-        val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate","") ?:""
+        val savedStatTypeString = sharedPreferences.getString("challengeStatType", "") ?: ""
+        val savedStatus =
+            sharedPreferences.getString("status", "Not completed yet") ?: "Not completed yet"
+        val savedStreak = sharedPreferences.getInt("streak", 0)
+        val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate", "") ?: ""
 
         val savedTotalXp = sharedPreferences.getInt("totalXp", 0)
         val savedStrengthXp = sharedPreferences.getInt("strengthXp", 0)
         val savedWisdomXp = sharedPreferences.getInt("wisdomXp", 0)
         val savedHealthXp = sharedPreferences.getInt("healthXp", 0)
         val savedDisciplineXp = sharedPreferences.getInt("disciplineXp", 0)
-        val savedCharismaXp = sharedPreferences.getInt("charismaXp",0)
+        val savedCharismaXp = sharedPreferences.getInt("charismaXp", 0)
 
         totalXp = savedTotalXp
         strengthXp = savedStrengthXp
@@ -106,35 +113,35 @@ fun QuestApp() {
         disciplineXp = savedDisciplineXp
         charismaXp = savedCharismaXp
 
-        val savedChallenge = if (savedTitle.isNotEmpty()){
+        val savedChallenge = if (savedTitle.isNotEmpty()) {
             Challenge(
                 title = savedTitle,
                 xp = savedXp,
                 statType = StatType.valueOf(savedStatTypeString)
             )
-        }else{
+        } else {
             null
         }
 
         streak = savedStreak
 
-        val lastCompletedDate = if (savedLastCompletedDate.isNotEmpty()){
+        val lastCompletedDate = if (savedLastCompletedDate.isNotEmpty()) {
             LocalDate.parse(savedLastCompletedDate)
-        }else{
+        } else {
             null
         }
 
-        if (lastCompletedDate != null && lastCompletedDate.isBefore(today.minusDays(1)) && savedStatus != "Completed!"){
+        if (lastCompletedDate != null && lastCompletedDate.isBefore(today.minusDays(1)) && savedStatus != "Completed!") {
             streak = 0
             sharedPreferences.edit {
                 putInt("streak", streak)
             }
         }
 
-        if (savedDate == todayString && savedChallenge != null){
+        if (savedDate == todayString && savedChallenge != null) {
             currentChallenge = savedChallenge
             status = savedStatus
-        }else{
+        } else {
             val newChallenge = challenges.random()
             currentChallenge = newChallenge
             status = "Not completed yet"
@@ -142,256 +149,247 @@ fun QuestApp() {
             sharedPreferences.edit {
                 putString("date", todayString)
                 putString("challengeTitle", newChallenge.title)
-                putInt("challengeXp",newChallenge.xp)
+                putInt("challengeXp", newChallenge.xp)
                 putString("challengeStatType", newChallenge.statType.name)
                 putString("status", status)
             }
         }
     }
 
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Text(
-                    text = "Quest Menu",
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                NavigationDrawerItem(
-                    label = {Text("Home")},
-                    selected = true,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                    }
-                )
-                NavigationDrawerItem(
-                    label = {Text("Stats")},
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                    }
-                )
-                NavigationDrawerItem(
-                    label = {Text("Settings")},
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                    }
-                )
+        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+        val scope = rememberCoroutineScope()
+
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet {
+                    Text(
+                        text = "Quest Menu",
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Home") },
+                        selected = true,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                        }
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Stats") },
+                        selected = false,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                        }
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Settings") },
+                        selected = false,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                        }
+                    )
+                }
             }
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text("Quest")
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                scope.launch { drawerState.open() }
+        ) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Text("Quest")
+                        },
+                        navigationIcon = {
+                            IconButton(
+                                onClick = {
+                                    scope.launch { drawerState.open() }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Menu,
+                                    contentDescription = "Open menu"
+                                )
                             }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(innerPadding)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Daily Challenge",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Open menu"
+                            Text(
+                                text = "Today's Challenge",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Text(
+                                text = currentChallenge?.title ?: "Loading today's quest",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "Reward: ${currentChallenge?.xp ?: 0} XP",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Stat: ${currentChallenge?.statType?.name ?: "NONE"}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
-                )
-            }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
 
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Status",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = status,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Current Streak",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "\uD83D\uDD25 $streak days",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Total XP",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "$totalXp XP",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text("Strength: $strengthXp", color = MaterialTheme.colorScheme.onSurface)
+                        Text("Wisdom: $wisdomXp", color = MaterialTheme.colorScheme.onSurface)
+                        Text("Health: $healthXp", color = MaterialTheme.colorScheme.onSurface)
+                        Text(
+                            "Discipline: $disciplineXp",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text("Charisma: $charismaXp", color = MaterialTheme.colorScheme.onSurface)
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            val today = LocalDate.now()
+                            val todayString = today.toString()
+                            val savedLastCompletedDate =
+                                sharedPreferences.getString("lastCompletedDate", "") ?: ""
+                            val challenge = currentChallenge
+                            if (status != "Completed!") {
+                                if (challenge != null) {
+                                    totalXp += challenge.xp
+
+                                    when (challenge.statType) {
+                                        StatType.STRENGTH -> strengthXp += challenge.xp
+                                        StatType.WISDOM -> wisdomXp += challenge.xp
+                                        StatType.HEALTH -> healthXp += challenge.xp
+                                        StatType.DISCIPLINE -> disciplineXp += challenge.xp
+                                        StatType.CHARISMA -> charismaXp += challenge.xp
+                                    }
+                                }
+                                if (savedLastCompletedDate.isEmpty()) {
+                                    streak = 1
+                                } else {
+                                    val lastCompletedDate = LocalDate.parse(savedLastCompletedDate)
+
+                                    streak = when {
+                                        lastCompletedDate == today -> streak
+                                        lastCompletedDate == today.minusDays(1) -> streak + 1
+                                        else -> 1
+                                    }
+                                }
+                                status = "Completed!"
+
+                                sharedPreferences.edit {
+                                    putString("status", status)
+                                    putInt("streak", streak)
+                                    putString("lastCompletedDate", todayString)
+
+                                    putInt("totalXp", totalXp)
+                                    putInt("strengthXp", strengthXp)
+                                    putInt("wisdomXp", wisdomXp)
+                                    putInt("healthXp", healthXp)
+                                    putInt("disciplineXp", disciplineXp)
+                                    putInt("charismaXp", charismaXp)
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Text(
+                            text = "Mark Complete",
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
+
+                }
             }
         }
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Daily Challenge",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
-            )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Today's Challenge",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = currentChallenge?.title ?: "Loading today's quest",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Reward: ${currentChallenge?.xp ?: 0} XP",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Stat: ${currentChallenge?.statType?.name ?: "NONE"}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Status",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = status,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Current Streak",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "\uD83D\uDD25 $streak days",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Total XP",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "$totalXp XP",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text("Strength: $strengthXp", color = MaterialTheme.colorScheme.onSurface)
-            Text("Wisdom: $wisdomXp", color = MaterialTheme.colorScheme.onSurface)
-            Text("Health: $healthXp", color = MaterialTheme.colorScheme.onSurface)
-            Text("Discipline: $disciplineXp", color = MaterialTheme.colorScheme.onSurface)
-            Text("Charisma: $charismaXp", color = MaterialTheme.colorScheme.onSurface)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(onClick = {
-            val today = LocalDate.now()
-            val todayString = today.toString()
-            val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate", "") ?:""
-            val challenge = currentChallenge
-            if(status != "Completed!") {
-                if (challenge != null) {
-                    totalXp += challenge.xp
-
-                    when(challenge.statType){
-                        StatType.STRENGTH -> strengthXp += challenge.xp
-                        StatType.WISDOM -> wisdomXp += challenge.xp
-                        StatType.HEALTH -> healthXp += challenge.xp
-                        StatType.DISCIPLINE -> disciplineXp += challenge.xp
-                        StatType.CHARISMA -> charismaXp += challenge.xp
-                    }
-                }
-                if (savedLastCompletedDate.isEmpty()){
-                    streak = 1
-                }else{
-                    val lastCompletedDate = LocalDate.parse(savedLastCompletedDate)
-
-                    streak = when{
-                        lastCompletedDate == today -> streak
-                        lastCompletedDate == today.minusDays(1) -> streak + 1
-                        else -> 1
-                    }
-                }
-                status = "Completed!"
-
-                sharedPreferences.edit {
-                    putString("status", status)
-                    putInt("streak", streak)
-                    putString("lastCompletedDate", todayString)
-
-                    putInt("totalXp",totalXp)
-                    putInt("strengthXp",strengthXp)
-                    putInt("wisdomXp", wisdomXp)
-                    putInt("healthXp",healthXp)
-                    putInt("disciplineXp",disciplineXp)
-                    putInt("charismaXp", charismaXp)
-                }
-            }
-        },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(
-                text = "Mark Complete",
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Button(onClick = {
-            status = "Not completed"
-            sharedPreferences.edit {
-                putString("status", status)
-            }
-        }) {
-            Text("Mark Not Complete")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-    }
-}
