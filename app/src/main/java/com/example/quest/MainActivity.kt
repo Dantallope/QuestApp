@@ -2,6 +2,8 @@ package com.example.quest
 
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.example.quest.screens.QuestScreen
+import com.example.quest.screens.StatsScreen
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -29,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerValue
@@ -42,7 +45,12 @@ import androidx.compose.material3.rememberDrawerState
 import com.example.quest.ui.theme.QuestTheme
 import kotlinx.coroutines.launch
 import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 
 
 class MainActivity : ComponentActivity() {
@@ -60,7 +68,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestApp() {
-
+    var selectedScreen by remember { mutableStateOf("quest") }
     val challenges = ChallengeRepo.challenges
 
 
@@ -217,125 +225,49 @@ fun QuestApp() {
                             navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     )
+                },
+                bottomBar = {
+                    NavigationBar{
+                        NavigationBarItem(
+                            selected = selectedScreen == "quest",
+                            onClick = {selectedScreen = "quest"},
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.Home,
+                                    contentDescription = "Quest"
+                                )
+                            },
+                            label = {Text("Quest")}
+                        )
+                        NavigationBarItem(
+                            selected = selectedScreen == "stats",
+                            onClick = {selectedScreen = "stats"},
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Stats"
+                                )
+                            },
+                            label = {Text("Stats")}
+                        )
+                    }
                 }
             ) { innerPadding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(innerPadding)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Daily Challenge",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(20.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "Today's Challenge",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Text(
-                                text = currentChallenge?.title ?: "Loading today's quest",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = "Reward: ${currentChallenge?.xp ?: 0} XP",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "Stat: ${currentChallenge?.statType?.name ?: "NONE"}",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Status",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = status,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "Current Streak",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "\uD83D\uDD25 $streak days",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "Total XP",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "$totalXp XP",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text("Strength: $strengthXp", color = MaterialTheme.colorScheme.onSurface)
-                        Text("Wisdom: $wisdomXp", color = MaterialTheme.colorScheme.onSurface)
-                        Text("Health: $healthXp", color = MaterialTheme.colorScheme.onSurface)
-                        Text(
-                            "Discipline: $disciplineXp",
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text("Charisma: $charismaXp", color = MaterialTheme.colorScheme.onSurface)
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
-                        onClick = {
+                when(selectedScreen){
+                    "quest" -> QuestScreen(
+                        innerPadding = innerPadding,
+                        currentChallenge = currentChallenge,
+                        status = status,
+                        streak = streak,
+                        totalXp = totalXp,
+                        onMarkComplete = {
                             val today = LocalDate.now()
                             val todayString = today.toString()
                             val savedLastCompletedDate =
                                 sharedPreferences.getString("lastCompletedDate", "") ?: ""
+
                             val challenge = currentChallenge
+
                             if (status != "Completed!") {
                                 if (challenge != null) {
                                     totalXp += challenge.xp
@@ -348,6 +280,7 @@ fun QuestApp() {
                                         StatType.CHARISMA -> charismaXp += challenge.xp
                                     }
                                 }
+
                                 if (savedLastCompletedDate.isEmpty()) {
                                     streak = 1
                                 } else {
@@ -359,6 +292,7 @@ fun QuestApp() {
                                         else -> 1
                                     }
                                 }
+
                                 status = "Completed!"
 
                                 sharedPreferences.edit {
@@ -374,22 +308,192 @@ fun QuestApp() {
                                     putInt("charismaXp", charismaXp)
                                 }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Text(
-                            text = "Mark Complete",
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    )
 
+                    "stats" -> StatsScreen(
+                        innerPadding = innerPadding,
+                        totalXp = totalXp,
+                        strengthXp = strengthXp,
+                        wisdomXp = wisdomXp,
+                        healthXp = healthXp,
+                        disciplineXp = disciplineXp,
+                        charismaXp = charismaXp,
+                        streak = streak
 
+                    )
                 }
+                }
+//                Column(
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .background(MaterialTheme.colorScheme.background)
+//                        .padding(innerPadding)
+//                        .padding(16.dp),
+//                    verticalArrangement = Arrangement.Center,
+//                    horizontalAlignment = Alignment.CenterHorizontally
+//                ) {
+//                    Text(
+//                        text = "Daily Challenge",
+//                        style = MaterialTheme.typography.headlineMedium,
+//                        color = MaterialTheme.colorScheme.onBackground
+//                    )
+//
+//                    Spacer(modifier = Modifier.height(24.dp))
+//
+//                    Card(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        colors = CardDefaults.cardColors(
+//                            containerColor = MaterialTheme.colorScheme.surface
+//                        ),
+//                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+//                    ) {
+//                        Column(
+//                            modifier = Modifier.padding(20.dp),
+//                            horizontalAlignment = Alignment.CenterHorizontally
+//                        ) {
+//                            Text(
+//                                text = "Today's Challenge",
+//                                style = MaterialTheme.typography.titleMedium,
+//                                color = MaterialTheme.colorScheme.onSurface
+//                            )
+//                            Spacer(modifier = Modifier.height(12.dp))
+//
+//                            Text(
+//                                text = currentChallenge?.title ?: "Loading today's quest",
+//                                style = MaterialTheme.typography.bodyLarge,
+//                                color = MaterialTheme.colorScheme.onSurface
+//                            )
+//
+//                            Spacer(modifier = Modifier.height(8.dp))
+//
+//                            Text(
+//                                text = "Reward: ${currentChallenge?.xp ?: 0} XP",
+//                                style = MaterialTheme.typography.bodyLarge,
+//                                color = MaterialTheme.colorScheme.onSurface
+//                            )
+//                            Text(
+//                                text = "Stat: ${currentChallenge?.statType?.name ?: "NONE"}",
+//                                style = MaterialTheme.typography.bodyLarge,
+//                                color = MaterialTheme.colorScheme.onSurface
+//                            )
+//                        }
+//                    }
+//
+//                    Spacer(modifier = Modifier.height(24.dp))
+//
+//                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+//                        Text(
+//                            text = "Status",
+//                            style = MaterialTheme.typography.titleMedium,
+//                            color = MaterialTheme.colorScheme.onSurface
+//                        )
+//                        Text(
+//                            text = status,
+//                            style = MaterialTheme.typography.bodyLarge,
+//                            color = MaterialTheme.colorScheme.onSurface
+//                        )
+//
+//                        Spacer(modifier = Modifier.height(12.dp))
+//
+//                        Text(
+//                            text = "Current Streak",
+//                            style = MaterialTheme.typography.titleMedium,
+//                            color = MaterialTheme.colorScheme.onSurface
+//                        )
+//                        Text(
+//                            text = "\uD83D\uDD25 $streak days",
+//                            style = MaterialTheme.typography.bodyLarge,
+//                            color = MaterialTheme.colorScheme.onSurface
+//                        )
+//
+//                        Spacer(modifier = Modifier.height(12.dp))
+//
+//                        Text(
+//                            text = "Total XP",
+//                            style = MaterialTheme.typography.titleMedium,
+//                            color = MaterialTheme.colorScheme.onSurface
+//                        )
+//                        Text(
+//                            text = "$totalXp XP",
+//                            style = MaterialTheme.typography.titleMedium,
+//                            color = MaterialTheme.colorScheme.onSurface
+//                        )
+//
+//                        Spacer(modifier = Modifier.height(12.dp))
+//
+//                        Text("Strength: $strengthXp", color = MaterialTheme.colorScheme.onSurface)
+//                        Text("Wisdom: $wisdomXp", color = MaterialTheme.colorScheme.onSurface)
+//                        Text("Health: $healthXp", color = MaterialTheme.colorScheme.onSurface)
+//                        Text(
+//                            "Discipline: $disciplineXp",
+//                            color = MaterialTheme.colorScheme.onSurface
+//                        )
+//                        Text("Charisma: $charismaXp", color = MaterialTheme.colorScheme.onSurface)
+//                    }
+//
+//                    Spacer(modifier = Modifier.height(24.dp))
+//
+//                    Button(
+//                        onClick = {
+//                            val today = LocalDate.now()
+//                            val todayString = today.toString()
+//                            val savedLastCompletedDate =
+//                                sharedPreferences.getString("lastCompletedDate", "") ?: ""
+//                            val challenge = currentChallenge
+//                            if (status != "Completed!") {
+//                                if (challenge != null) {
+//                                    totalXp += challenge.xp
+//
+//                                    when (challenge.statType) {
+//                                        StatType.STRENGTH -> strengthXp += challenge.xp
+//                                        StatType.WISDOM -> wisdomXp += challenge.xp
+//                                        StatType.HEALTH -> healthXp += challenge.xp
+//                                        StatType.DISCIPLINE -> disciplineXp += challenge.xp
+//                                        StatType.CHARISMA -> charismaXp += challenge.xp
+//                                    }
+//                                }
+//                                if (savedLastCompletedDate.isEmpty()) {
+//                                    streak = 1
+//                                } else {
+//                                    val lastCompletedDate = LocalDate.parse(savedLastCompletedDate)
+//
+//                                    streak = when {
+//                                        lastCompletedDate == today -> streak
+//                                        lastCompletedDate == today.minusDays(1) -> streak + 1
+//                                        else -> 1
+//                                    }
+//                                }
+//                                status = "Completed!"
+//
+//                                sharedPreferences.edit {
+//                                    putString("status", status)
+//                                    putInt("streak", streak)
+//                                    putString("lastCompletedDate", todayString)
+//
+//                                    putInt("totalXp", totalXp)
+//                                    putInt("strengthXp", strengthXp)
+//                                    putInt("wisdomXp", wisdomXp)
+//                                    putInt("healthXp", healthXp)
+//                                    putInt("disciplineXp", disciplineXp)
+//                                    putInt("charismaXp", charismaXp)
+//                                }
+//                            }
+//                        },
+//                        modifier = Modifier.fillMaxWidth(),
+//                        colors = ButtonDefaults.buttonColors(
+//                            containerColor = MaterialTheme.colorScheme.primary,
+//                            contentColor = MaterialTheme.colorScheme.onPrimary
+//                        )
+//                    ) {
+//                        Text(
+//                            text = "Mark Complete",
+//                            color = MaterialTheme.colorScheme.onPrimary
+//                        )
+//                    }
+//                    Spacer(modifier = Modifier.height(12.dp))
+//
+//
+//                }
             }
         }
-    }
