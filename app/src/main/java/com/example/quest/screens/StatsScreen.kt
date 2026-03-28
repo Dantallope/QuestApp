@@ -66,7 +66,7 @@ fun StatsScreen(
         )
 
         Text(
-            text = "🧠 Wisdom: $wisdomXp",
+            text = "🧠 Wisdom: $wisdomLevel",
             style = MaterialTheme.typography.titleMedium
             )
         Text(
@@ -79,11 +79,11 @@ fun StatsScreen(
         )
 
         Text(
-            text = "❤️ Health: $healthXp xp",
+            text = "❤️ Health: $healthLevel",
             style = MaterialTheme.typography.titleMedium
             )
         Text(
-            text = "$healthXp",
+            text = "$healthXp xp",
             style = MaterialTheme.typography.bodyMedium
         )
         LinearProgressIndicator(
@@ -92,7 +92,7 @@ fun StatsScreen(
         )
 
         Text(
-            text = "🧘 Discipline: $disciplineXp",
+            text = "🧘 Discipline: $disciplineLevel",
             style = MaterialTheme.typography.titleMedium
             )
         Text(
@@ -105,7 +105,7 @@ fun StatsScreen(
         )
 
         Text(
-            text = "✨ Charisma: $charismaXp",
+            text = "✨ Charisma: $charismaLevel",
             style = MaterialTheme.typography.titleMedium
             )
         Text(
