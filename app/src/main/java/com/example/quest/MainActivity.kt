@@ -4,6 +4,7 @@ package com.example.quest
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.quest.screens.QuestScreen
 import com.example.quest.screens.StatsScreen
+import com.example.quest.screens.SettingsScreen
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -250,6 +251,17 @@ fun QuestApp() {
                             },
                             label = {Text("Stats")}
                         )
+                        NavigationBarItem(
+                            selected = selectedScreen == "settings",
+                            onClick = {selectedScreen = "settings"},
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = "Settings"
+                                )
+                            },
+                            label = {Text("settings")}
+                        )
                     }
                 }
             ) { innerPadding ->
@@ -321,6 +333,9 @@ fun QuestApp() {
                         charismaXp = charismaXp,
                         streak = streak
 
+                    )
+
+                    "settings" -> SettingsScreen(
                     )
                 }
                 }

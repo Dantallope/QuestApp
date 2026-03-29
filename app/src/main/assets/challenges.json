@@ -1,0 +1,32 @@
+[
+  {
+    "title": "Drink a glass of water",
+    "xp": 5,
+    "statType": "HEALTH"
+  },
+  {
+    "title": "Take a 10 minute walk",
+    "xp": 10,
+    "statType": "HEALTH"
+  },
+  {
+    "title": "Read 5 pages",
+    "xp": 10,
+    "statType": "WISDOM"
+  },
+  {
+    "title": "Do 10 push-ups",
+    "xp": 15,
+    "statType": "STRENGTH"
+  },
+  {
+    "title": "Stretch for 5 minutes",
+    "xp": 8,
+    "statType": "DISCIPLINE"
+  },
+  {
+    "title": "Compliment someone",
+    "xp": 7,
+    "statType": "CHARISMA"
+  }
+]
