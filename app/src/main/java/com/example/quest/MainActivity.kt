@@ -70,7 +70,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun QuestApp() {
     var selectedScreen by remember { mutableStateOf("quest") }
-    val challenges = ChallengeRepo.challenges
+    val context = LocalContext.current
+    val challenges = remember {
+        ChallengeRepo.loadChallenges(context)
+    }
 
 
     var currentChallenge by remember {
@@ -82,16 +85,15 @@ fun QuestApp() {
     }
 
     var streak by remember {
-        mutableStateOf(0)
+        mutableIntStateOf(0)
     }
-    var totalXp by remember { mutableStateOf(0) }
-    var strengthXp by remember { mutableStateOf(0) }
-    var wisdomXp by remember { mutableStateOf(0) }
-    var healthXp by remember { mutableStateOf(0) }
-    var disciplineXp by remember { mutableStateOf(0) }
-    var charismaXp by remember { mutableStateOf(0) }
+    var totalXp by remember { mutableIntStateOf(0) }
+    var strengthXp by remember { mutableIntStateOf(0) }
+    var wisdomXp by remember { mutableIntStateOf(0) }
+    var healthXp by remember { mutableIntStateOf(0) }
+    var disciplineXp by remember { mutableIntStateOf(0) }
+    var charismaXp by remember { mutableIntStateOf(0) }
 
-    val context = LocalContext.current
     val sharedPreferences =
         context.getSharedPreferences("daily_challenge_prefs", Context.MODE_PRIVATE)
 

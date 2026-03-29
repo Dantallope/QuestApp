@@ -1,12 +1,31 @@
 package com.example.quest
 
+import android.content.Context
+import org.json.JSONArray
 object ChallengeRepo{
-    val challenges = listOf(
-        Challenge("Drink a glass of water",5, StatType.HEALTH),
-        Challenge("Take a 10 minute walk",10,StatType.HEALTH),
-        Challenge("Read 5 pages",10,StatType.WISDOM),
-        Challenge("Do 10 push-ups", 15, StatType.STRENGTH),
-        Challenge("Stretch for 5 minutes",8,StatType.DISCIPLINE),
-        Challenge("Compliment someone", 7, StatType.CHARISMA)
-    )
+    fun loadChallenges(context: Context): List<Challenge>{
+        val jsonString = context.assets
+            .open("challenges.json")
+            .bufferedReader()
+            .use { it.readText() }
+
+        val jsonArray = JSONArray(jsonString)
+        val challenges = mutableListOf<Challenge>()
+
+        for (i in 0 until jsonArray.length()){
+            val jsonObject = jsonArray.getJSONObject(i)
+
+            val title = jsonObject.getString("title")
+            val xp = jsonObject.getInt("xp")
+            val statTypeString = jsonObject.getString("statType")
+
+            val challenge = Challenge(
+                title = title,
+                xp = xp,
+                statType = StatType.valueOf(statTypeString)
+            )
+            challenges.add(challenge)
+        }
+        return challenges
+    }
 }
