@@ -18,11 +18,15 @@ object ChallengeRepo{
             val title = jsonObject.getString("title")
             val xp = jsonObject.getInt("xp")
             val statTypeString = jsonObject.getString("statType")
+            val difficultyString = jsonObject.getString("difficulty")
+            val minLevel = jsonObject.getInt("minLevel")
 
             val challenge = Challenge(
                 title = title,
                 xp = xp,
-                statType = StatType.valueOf(statTypeString)
+                statType = StatType.valueOf(statTypeString),
+                difficulty = Difficulty.valueOf(difficultyString),
+                minLevel = minLevel
             )
             challenges.add(challenge)
         }

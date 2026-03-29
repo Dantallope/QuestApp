@@ -52,6 +52,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import kotlin.math.min
 
 
 class MainActivity : ComponentActivity() {
@@ -109,6 +110,8 @@ fun QuestApp() {
             sharedPreferences.getString("status", "Not completed yet") ?: "Not completed yet"
         val savedStreak = sharedPreferences.getInt("streak", 0)
         val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate", "") ?: ""
+        val savedDifficultyString = sharedPreferences.getString("challengeDifficulty", "") ?:""
+        val savedMinLevel = sharedPreferences.getInt("challengeMinLevel", 1)
 
         val savedTotalXp = sharedPreferences.getInt("totalXp", 0)
         val savedStrengthXp = sharedPreferences.getInt("strengthXp", 0)
@@ -117,6 +120,10 @@ fun QuestApp() {
         val savedDisciplineXp = sharedPreferences.getInt("disciplineXp", 0)
         val savedCharismaXp = sharedPreferences.getInt("charismaXp", 0)
 
+        val playerLevel = (totalXp / 100) + 1
+        val availableChallenges =
+            challenges.filter { challenge -> challenge.minLevel <= playerLevel }
+
         totalXp = savedTotalXp
         strengthXp = savedStrengthXp
         wisdomXp = savedWisdomXp
@@ -124,12 +131,22 @@ fun QuestApp() {
         disciplineXp = savedDisciplineXp
         charismaXp = savedCharismaXp
 
-        val savedChallenge = if (savedTitle.isNotEmpty()) {
-            Challenge(
-                title = savedTitle,
-                xp = savedXp,
-                statType = StatType.valueOf(savedStatTypeString)
-            )
+        val savedChallenge = if (
+            savedTitle.isNotEmpty() &&
+            savedStatTypeString.isNotEmpty() &&
+            savedDifficultyString.isNotEmpty()
+        ) {
+            try {
+                Challenge(
+                    title = savedTitle,
+                    xp = savedXp,
+                    statType = StatType.valueOf(savedStatTypeString),
+                    difficulty = Difficulty.valueOf(savedDifficultyString),
+                    minLevel = savedMinLevel
+                )
+            } catch (e: Exception) {
+                null
+            }
         } else {
             null
         }
@@ -154,7 +171,7 @@ fun QuestApp() {
             status = savedStatus
         } else {
             if (challenges.isNotEmpty()) {
-                val newChallenge = challenges.random()
+                val newChallenge = availableChallenges.random()
                 currentChallenge = newChallenge
                 status = "Not completed yet"
 
@@ -163,14 +180,18 @@ fun QuestApp() {
                     putString("challengeTitle", newChallenge.title)
                     putInt("challengeXp", newChallenge.xp)
                     putString("challengeStatType", newChallenge.statType.name)
+                    putString("challengeDifficulty", newChallenge.difficulty.name)
+                    putInt("challengeMinLevel", newChallenge.minLevel)
                     putString("status", status)
                 }
-            }else{
+            } else {
                 //If JSON Repo is empty
                 currentChallenge = Challenge(
                     title = "No Challenges Available",
                     xp = 0,
-                    statType = StatType.DISCIPLINE
+                    statType = StatType.DISCIPLINE,
+                    difficulty = Difficulty.EASY,
+                    minLevel = 0
                 )
                 status = "Error loading challenges"
             }
