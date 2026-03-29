@@ -153,364 +153,203 @@ fun QuestApp() {
             currentChallenge = savedChallenge
             status = savedStatus
         } else {
-            val newChallenge = challenges.random()
-            currentChallenge = newChallenge
-            status = "Not completed yet"
+            if (challenges.isNotEmpty()) {
+                val newChallenge = challenges.random()
+                currentChallenge = newChallenge
+                status = "Not completed yet"
 
-            sharedPreferences.edit {
-                putString("date", todayString)
-                putString("challengeTitle", newChallenge.title)
-                putInt("challengeXp", newChallenge.xp)
-                putString("challengeStatType", newChallenge.statType.name)
-                putString("status", status)
+                sharedPreferences.edit {
+                    putString("date", todayString)
+                    putString("challengeTitle", newChallenge.title)
+                    putInt("challengeXp", newChallenge.xp)
+                    putString("challengeStatType", newChallenge.statType.name)
+                    putString("status", status)
+                }
+            }else{
+                //If JSON Repo is empty
+                currentChallenge = Challenge(
+                    title = "No Challenges Available",
+                    xp = 0,
+                    statType = StatType.DISCIPLINE
+                )
+                status = "Error loading challenges"
             }
         }
     }
 
 
-        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-        val scope = rememberCoroutineScope()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-        ModalNavigationDrawer(
-            drawerState = drawerState,
-            drawerContent = {
-                ModalDrawerSheet {
-                    Text(
-                        text = "Quest Menu",
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("Home") },
-                        selected = true,
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                        }
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("Stats") },
-                        selected = false,
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                        }
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("Settings") },
-                        selected = false,
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                        }
-                    )
-                }
-            }
-        ) {
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = {
-                            Text("Quest")
-                        },
-                        navigationIcon = {
-                            IconButton(
-                                onClick = {
-                                    scope.launch { drawerState.open() }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Menu,
-                                    contentDescription = "Open menu"
-                                )
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
-                },
-                bottomBar = {
-                    NavigationBar{
-                        NavigationBarItem(
-                            selected = selectedScreen == "quest",
-                            onClick = {selectedScreen = "quest"},
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.Home,
-                                    contentDescription = "Quest"
-                                )
-                            },
-                            label = {Text("Quest")}
-                        )
-                        NavigationBarItem(
-                            selected = selectedScreen == "stats",
-                            onClick = {selectedScreen = "stats"},
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Stats"
-                                )
-                            },
-                            label = {Text("Stats")}
-                        )
-                        NavigationBarItem(
-                            selected = selectedScreen == "settings",
-                            onClick = {selectedScreen = "settings"},
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = "Settings"
-                                )
-                            },
-                            label = {Text("settings")}
-                        )
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Text(
+                    text = "Quest Menu",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                NavigationDrawerItem(
+                    label = { Text("Home") },
+                    selected = true,
+                    onClick = {
+                        scope.launch { drawerState.close() }
                     }
-                }
-            ) { innerPadding ->
-                when(selectedScreen){
-                    "quest" -> QuestScreen(
-                        innerPadding = innerPadding,
-                        currentChallenge = currentChallenge,
-                        status = status,
-                        streak = streak,
-                        totalXp = totalXp,
-                        onMarkComplete = {
-                            val today = LocalDate.now()
-                            val todayString = today.toString()
-                            val savedLastCompletedDate =
-                                sharedPreferences.getString("lastCompletedDate", "") ?: ""
-
-                            val challenge = currentChallenge
-
-                            if (status != "Completed!") {
-                                if (challenge != null) {
-                                    totalXp += challenge.xp
-
-                                    when (challenge.statType) {
-                                        StatType.STRENGTH -> strengthXp += challenge.xp
-                                        StatType.WISDOM -> wisdomXp += challenge.xp
-                                        StatType.HEALTH -> healthXp += challenge.xp
-                                        StatType.DISCIPLINE -> disciplineXp += challenge.xp
-                                        StatType.CHARISMA -> charismaXp += challenge.xp
-                                    }
-                                }
-
-                                if (savedLastCompletedDate.isEmpty()) {
-                                    streak = 1
-                                } else {
-                                    val lastCompletedDate = LocalDate.parse(savedLastCompletedDate)
-
-                                    streak = when {
-                                        lastCompletedDate == today -> streak
-                                        lastCompletedDate == today.minusDays(1) -> streak + 1
-                                        else -> 1
-                                    }
-                                }
-
-                                status = "Completed!"
-
-                                sharedPreferences.edit {
-                                    putString("status", status)
-                                    putInt("streak", streak)
-                                    putString("lastCompletedDate", todayString)
-
-                                    putInt("totalXp", totalXp)
-                                    putInt("strengthXp", strengthXp)
-                                    putInt("wisdomXp", wisdomXp)
-                                    putInt("healthXp", healthXp)
-                                    putInt("disciplineXp", disciplineXp)
-                                    putInt("charismaXp", charismaXp)
-                                }
-                            }
-                        }
-                    )
-
-                    "stats" -> StatsScreen(
-                        innerPadding = innerPadding,
-                        totalXp = totalXp,
-                        strengthXp = strengthXp,
-                        wisdomXp = wisdomXp,
-                        healthXp = healthXp,
-                        disciplineXp = disciplineXp,
-                        charismaXp = charismaXp,
-                        streak = streak
-
-                    )
-
-                    "settings" -> SettingsScreen(
-                    )
-                }
-                }
-//                Column(
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .background(MaterialTheme.colorScheme.background)
-//                        .padding(innerPadding)
-//                        .padding(16.dp),
-//                    verticalArrangement = Arrangement.Center,
-//                    horizontalAlignment = Alignment.CenterHorizontally
-//                ) {
-//                    Text(
-//                        text = "Daily Challenge",
-//                        style = MaterialTheme.typography.headlineMedium,
-//                        color = MaterialTheme.colorScheme.onBackground
-//                    )
-//
-//                    Spacer(modifier = Modifier.height(24.dp))
-//
-//                    Card(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        colors = CardDefaults.cardColors(
-//                            containerColor = MaterialTheme.colorScheme.surface
-//                        ),
-//                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-//                    ) {
-//                        Column(
-//                            modifier = Modifier.padding(20.dp),
-//                            horizontalAlignment = Alignment.CenterHorizontally
-//                        ) {
-//                            Text(
-//                                text = "Today's Challenge",
-//                                style = MaterialTheme.typography.titleMedium,
-//                                color = MaterialTheme.colorScheme.onSurface
-//                            )
-//                            Spacer(modifier = Modifier.height(12.dp))
-//
-//                            Text(
-//                                text = currentChallenge?.title ?: "Loading today's quest",
-//                                style = MaterialTheme.typography.bodyLarge,
-//                                color = MaterialTheme.colorScheme.onSurface
-//                            )
-//
-//                            Spacer(modifier = Modifier.height(8.dp))
-//
-//                            Text(
-//                                text = "Reward: ${currentChallenge?.xp ?: 0} XP",
-//                                style = MaterialTheme.typography.bodyLarge,
-//                                color = MaterialTheme.colorScheme.onSurface
-//                            )
-//                            Text(
-//                                text = "Stat: ${currentChallenge?.statType?.name ?: "NONE"}",
-//                                style = MaterialTheme.typography.bodyLarge,
-//                                color = MaterialTheme.colorScheme.onSurface
-//                            )
-//                        }
-//                    }
-//
-//                    Spacer(modifier = Modifier.height(24.dp))
-//
-//                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-//                        Text(
-//                            text = "Status",
-//                            style = MaterialTheme.typography.titleMedium,
-//                            color = MaterialTheme.colorScheme.onSurface
-//                        )
-//                        Text(
-//                            text = status,
-//                            style = MaterialTheme.typography.bodyLarge,
-//                            color = MaterialTheme.colorScheme.onSurface
-//                        )
-//
-//                        Spacer(modifier = Modifier.height(12.dp))
-//
-//                        Text(
-//                            text = "Current Streak",
-//                            style = MaterialTheme.typography.titleMedium,
-//                            color = MaterialTheme.colorScheme.onSurface
-//                        )
-//                        Text(
-//                            text = "\uD83D\uDD25 $streak days",
-//                            style = MaterialTheme.typography.bodyLarge,
-//                            color = MaterialTheme.colorScheme.onSurface
-//                        )
-//
-//                        Spacer(modifier = Modifier.height(12.dp))
-//
-//                        Text(
-//                            text = "Total XP",
-//                            style = MaterialTheme.typography.titleMedium,
-//                            color = MaterialTheme.colorScheme.onSurface
-//                        )
-//                        Text(
-//                            text = "$totalXp XP",
-//                            style = MaterialTheme.typography.titleMedium,
-//                            color = MaterialTheme.colorScheme.onSurface
-//                        )
-//
-//                        Spacer(modifier = Modifier.height(12.dp))
-//
-//                        Text("Strength: $strengthXp", color = MaterialTheme.colorScheme.onSurface)
-//                        Text("Wisdom: $wisdomXp", color = MaterialTheme.colorScheme.onSurface)
-//                        Text("Health: $healthXp", color = MaterialTheme.colorScheme.onSurface)
-//                        Text(
-//                            "Discipline: $disciplineXp",
-//                            color = MaterialTheme.colorScheme.onSurface
-//                        )
-//                        Text("Charisma: $charismaXp", color = MaterialTheme.colorScheme.onSurface)
-//                    }
-//
-//                    Spacer(modifier = Modifier.height(24.dp))
-//
-//                    Button(
-//                        onClick = {
-//                            val today = LocalDate.now()
-//                            val todayString = today.toString()
-//                            val savedLastCompletedDate =
-//                                sharedPreferences.getString("lastCompletedDate", "") ?: ""
-//                            val challenge = currentChallenge
-//                            if (status != "Completed!") {
-//                                if (challenge != null) {
-//                                    totalXp += challenge.xp
-//
-//                                    when (challenge.statType) {
-//                                        StatType.STRENGTH -> strengthXp += challenge.xp
-//                                        StatType.WISDOM -> wisdomXp += challenge.xp
-//                                        StatType.HEALTH -> healthXp += challenge.xp
-//                                        StatType.DISCIPLINE -> disciplineXp += challenge.xp
-//                                        StatType.CHARISMA -> charismaXp += challenge.xp
-//                                    }
-//                                }
-//                                if (savedLastCompletedDate.isEmpty()) {
-//                                    streak = 1
-//                                } else {
-//                                    val lastCompletedDate = LocalDate.parse(savedLastCompletedDate)
-//
-//                                    streak = when {
-//                                        lastCompletedDate == today -> streak
-//                                        lastCompletedDate == today.minusDays(1) -> streak + 1
-//                                        else -> 1
-//                                    }
-//                                }
-//                                status = "Completed!"
-//
-//                                sharedPreferences.edit {
-//                                    putString("status", status)
-//                                    putInt("streak", streak)
-//                                    putString("lastCompletedDate", todayString)
-//
-//                                    putInt("totalXp", totalXp)
-//                                    putInt("strengthXp", strengthXp)
-//                                    putInt("wisdomXp", wisdomXp)
-//                                    putInt("healthXp", healthXp)
-//                                    putInt("disciplineXp", disciplineXp)
-//                                    putInt("charismaXp", charismaXp)
-//                                }
-//                            }
-//                        },
-//                        modifier = Modifier.fillMaxWidth(),
-//                        colors = ButtonDefaults.buttonColors(
-//                            containerColor = MaterialTheme.colorScheme.primary,
-//                            contentColor = MaterialTheme.colorScheme.onPrimary
-//                        )
-//                    ) {
-//                        Text(
-//                            text = "Mark Complete",
-//                            color = MaterialTheme.colorScheme.onPrimary
-//                        )
-//                    }
-//                    Spacer(modifier = Modifier.height(12.dp))
-//
-//
-//                }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Stats") },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                    }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Settings") },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                    }
+                )
             }
         }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text("Quest")
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = {
+                                scope.launch { drawerState.open() }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Open menu"
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+            },
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = selectedScreen == "quest",
+                        onClick = { selectedScreen = "quest" },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Quest"
+                            )
+                        },
+                        label = { Text("Quest") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedScreen == "stats",
+                        onClick = { selectedScreen = "stats" },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Stats"
+                            )
+                        },
+                        label = { Text("Stats") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedScreen == "settings",
+                        onClick = { selectedScreen = "settings" },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings"
+                            )
+                        },
+                        label = { Text("settings") }
+                    )
+                }
+            }
+        ) { innerPadding ->
+            when (selectedScreen) {
+                "quest" -> QuestScreen(
+                    innerPadding = innerPadding,
+                    currentChallenge = currentChallenge,
+                    status = status,
+                    streak = streak,
+                    totalXp = totalXp,
+                    onMarkComplete = {
+                        val today = LocalDate.now()
+                        val todayString = today.toString()
+                        val savedLastCompletedDate =
+                            sharedPreferences.getString("lastCompletedDate", "") ?: ""
+
+                        val challenge = currentChallenge
+
+                        if (status != "Completed!") {
+                            if (challenge != null) {
+                                totalXp += challenge.xp
+
+                                when (challenge.statType) {
+                                    StatType.STRENGTH -> strengthXp += challenge.xp
+                                    StatType.WISDOM -> wisdomXp += challenge.xp
+                                    StatType.HEALTH -> healthXp += challenge.xp
+                                    StatType.DISCIPLINE -> disciplineXp += challenge.xp
+                                    StatType.CHARISMA -> charismaXp += challenge.xp
+                                }
+                            }
+
+                            if (savedLastCompletedDate.isEmpty()) {
+                                streak = 1
+                            } else {
+                                val lastCompletedDate = LocalDate.parse(savedLastCompletedDate)
+
+                                streak = when {
+                                    lastCompletedDate == today -> streak
+                                    lastCompletedDate == today.minusDays(1) -> streak + 1
+                                    else -> 1
+                                }
+                            }
+
+                            status = "Completed!"
+
+                            sharedPreferences.edit {
+                                putString("status", status)
+                                putInt("streak", streak)
+                                putString("lastCompletedDate", todayString)
+
+                                putInt("totalXp", totalXp)
+                                putInt("strengthXp", strengthXp)
+                                putInt("wisdomXp", wisdomXp)
+                                putInt("healthXp", healthXp)
+                                putInt("disciplineXp", disciplineXp)
+                                putInt("charismaXp", charismaXp)
+                            }
+                        }
+                    }
+                )
+
+                "stats" -> StatsScreen(
+                    innerPadding = innerPadding,
+                    totalXp = totalXp,
+                    strengthXp = strengthXp,
+                    wisdomXp = wisdomXp,
+                    healthXp = healthXp,
+                    disciplineXp = disciplineXp,
+                    charismaXp = charismaXp,
+                    streak = streak
+
+                )
+
+                "settings" -> SettingsScreen(
+                )
+            }
+        }
+    }
+}
