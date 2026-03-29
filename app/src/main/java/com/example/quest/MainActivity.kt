@@ -129,16 +129,17 @@ fun QuestApp() {
         val savedDisciplineXp = sharedPreferences.getInt("disciplineXp", 0)
         val savedCharismaXp = sharedPreferences.getInt("charismaXp", 0)
 
-        val playerLevel = (totalXp / 100) + 1
-        val availableChallenges =
-            challenges.filter { challenge -> challenge.minLevel <= playerLevel }
-
         totalXp = savedTotalXp
         strengthXp = savedStrengthXp
         wisdomXp = savedWisdomXp
         healthXp = savedHealthXp
         disciplineXp = savedDisciplineXp
         charismaXp = savedCharismaXp
+
+        val playerLevel = (totalXp / 100) + 1
+        val availableChallenges =
+            challenges.filter { challenge -> challenge.minLevel <= playerLevel }
+
 
         val savedChallenge = if (
             savedTitle.isNotEmpty() &&
@@ -179,7 +180,7 @@ fun QuestApp() {
             currentChallenge = savedChallenge
             status = savedStatus
         } else {
-            if (challenges.isNotEmpty()) {
+            if (availableChallenges.isNotEmpty()) {
                 val newChallenge = availableChallenges.random()
                 currentChallenge = newChallenge
                 status = "Not completed yet"
@@ -462,6 +463,54 @@ fun QuestApp() {
                 )
 
                 "settings" -> SettingsScreen(
+                    innerPadding = innerPadding,
+                    onUncompleteQuest = {
+                        status = "Not completed yet"
+
+                        sharedPreferences.edit {
+                            putString("status", status)
+                        }
+                    },
+                    onResetXp = {
+                        totalXp = 0
+                        strengthXp = 0
+                        wisdomXp = 0
+                        healthXp = 0
+                        disciplineXp = 0
+                        charismaXp = 0
+
+                        sharedPreferences.edit{
+                            putInt("totalXp",0)
+                            putInt("strengthXp",0)
+                            putInt("wisdomXp",0)
+                            putInt("healthXp",0)
+                            putInt("disciplineXp",0)
+                            putInt("charismaXp",0)
+                        }
+                    },
+                    onResetStreak = {
+                        streak = 0
+
+                        sharedPreferences.edit {
+                            putInt("streak",0)
+                            putString("lastCompletedDate","")
+                        }
+                    },
+                    onClearAllData = {
+                        currentChallenge = null
+                        status = "Not completed yet"
+                        streak = 0
+                        totalXp = 0
+                        strengthXp = 0
+                        wisdomXp = 0
+                        healthXp = 0
+                        disciplineXp = 0
+                        charismaXp = 0
+
+                        sharedPreferences.edit {
+                            clear()
+                        }
+                    }
                 )
             }
         }
@@ -479,11 +528,19 @@ fun RewardPopUp(
     data: RewardPopUpData,
     onDismiss: () -> Unit
 ){
-    val targetProgress = (data.newXp % 100) / 100f
+    var startAnimation by remember { mutableStateOf(false)}
+
+    val startProgress = (data.oldXp % 100) / 100f
+    val endProgress = (data.newXp % 100) / 100f
+
     val animatedProgress by animateFloatAsState(
-        targetValue = targetProgress,
+        targetValue = if (startAnimation) endProgress else startProgress,
         label = "rewardBarAnimation"
     )
+
+    LaunchedEffect(Unit) {
+        startAnimation = true
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -501,7 +558,10 @@ fun RewardPopUp(
             ) {
                 Text("+${data.xpGained} XP to ${data.statLabel}")
 
-                Text("${data.statLabel} Lv. ${data.newLevel}")
+                Text(
+                    text = "${data.statLabel} Lv. ${data.newLevel}",
+                    style = MaterialTheme.typography.titleMedium
+                    )
 
                 LinearProgressIndicator(
                     progress = { animatedProgress },

@@ -23,6 +23,82 @@ import androidx.compose.ui.draw.clip
 import com.example.quest.Challenge
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    innerPadding: PaddingValues,
+    onUncompleteQuest: () -> Unit,
+    onResetXp: () -> Unit,
+    onResetStreak: () -> Unit,
+    onClearAllData: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(innerPadding)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Settings",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        Text(
+            text = "Debug tools for testing your app.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f)
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Debug Actions",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Button(
+                    onClick = onUncompleteQuest,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Uncomplete Today's Quest")
+                }
+
+                Button(
+                    onClick = onResetXp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Reset XP and Levels")
+                }
+
+                Button(
+                    onClick = onResetStreak,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Reset Streak")
+                }
+
+                Button(
+                    onClick = onClearAllData,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text("Clear All Save Data")
+                }
+            }
+        }
+    }
 
 }
