@@ -9,6 +9,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -31,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -52,7 +54,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.LinearProgressIndicator
 import kotlin.math.min
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.draw.clip
 
 
 class MainActivity : ComponentActivity() {
@@ -88,6 +94,9 @@ fun QuestApp() {
     var streak by remember {
         mutableIntStateOf(0)
     }
+
+    var rewardPopUpData by remember { mutableStateOf<RewardPopUpData?>(null) }
+
     var totalXp by remember { mutableIntStateOf(0) }
     var strengthXp by remember { mutableIntStateOf(0) }
     var wisdomXp by remember { mutableIntStateOf(0) }
@@ -318,11 +327,95 @@ fun QuestApp() {
                                 totalXp += challenge.xp
 
                                 when (challenge.statType) {
-                                    StatType.STRENGTH -> strengthXp += challenge.xp
-                                    StatType.WISDOM -> wisdomXp += challenge.xp
-                                    StatType.HEALTH -> healthXp += challenge.xp
-                                    StatType.DISCIPLINE -> disciplineXp += challenge.xp
-                                    StatType.CHARISMA -> charismaXp += challenge.xp
+                                    StatType.STRENGTH -> {
+                                        val oldXp = strengthXp
+                                        val oldLevel = (oldXp / 100) + 1
+                                        strengthXp += challenge.xp
+                                        val newXp = strengthXp
+                                        val newLevel = (newXp / 100) + 1
+
+                                        rewardPopUpData = RewardPopUpData(
+                                            statLabel = "Strength",
+                                            xpGained = challenge.xp,
+                                            oldXp = oldXp,
+                                            newXp = newXp,
+                                            oldLevel = oldLevel,
+                                            newLevel = newLevel,
+                                            barColor = Color(0xFFE57373)
+                                        )
+                                    }
+
+                                    StatType.WISDOM -> {
+                                        val oldXp = wisdomXp
+                                        val oldLevel = (oldXp / 100) + 1
+                                        wisdomXp += challenge.xp
+                                        val newXp = wisdomXp
+                                        val newLevel = (newXp / 100) + 1
+
+                                        rewardPopUpData = RewardPopUpData(
+                                            statLabel = "Wisdom",
+                                            xpGained = challenge.xp,
+                                            oldXp = oldXp,
+                                            newXp = newXp,
+                                            oldLevel = oldLevel,
+                                            newLevel = newLevel,
+                                            barColor = Color(0xFF00B4C9)
+                                        )
+                                    }
+
+                                    StatType.HEALTH -> {
+                                        val oldXp = healthXp
+                                        val oldLevel = (oldXp / 100) + 1
+                                        healthXp += challenge.xp
+                                        val newXp = healthXp
+                                        val newLevel = (newXp / 100) + 1
+
+                                        rewardPopUpData = RewardPopUpData(
+                                            statLabel = "Health",
+                                            xpGained = challenge.xp,
+                                            oldXp = oldXp,
+                                            newXp = newXp,
+                                            oldLevel = oldLevel,
+                                            newLevel = newLevel,
+                                            barColor = Color(0xFF00BB06)
+                                        )
+                                    }
+
+                                    StatType.DISCIPLINE -> {
+                                        val oldXp = disciplineXp
+                                        val oldLevel = (oldXp / 100) + 1
+                                        disciplineXp += challenge.xp
+                                        val newXp = disciplineXp
+                                        val newLevel = (newXp / 100) + 1
+
+                                        rewardPopUpData = RewardPopUpData(
+                                            statLabel = "Discipline",
+                                            xpGained = challenge.xp,
+                                            oldXp = oldXp,
+                                            newXp = newXp,
+                                            oldLevel = oldLevel,
+                                            newLevel = newLevel,
+                                            barColor = Color(0xFF9C27B0)
+                                        )
+                                    }
+
+                                    StatType.CHARISMA -> {
+                                        val oldXp = charismaXp
+                                        val oldLevel = (oldXp / 100) + 1
+                                        charismaXp += challenge.xp
+                                        val newXp = charismaXp
+                                        val newLevel = (newXp / 100) + 1
+
+                                        rewardPopUpData = RewardPopUpData(
+                                            statLabel = "Charisma",
+                                            xpGained = challenge.xp,
+                                            oldXp = oldXp,
+                                            newXp = newXp,
+                                            oldLevel = oldLevel,
+                                            newLevel = newLevel,
+                                            barColor = Color(0xFFFFC107)
+                                        )
+                                    }
                                 }
                             }
 
@@ -373,4 +466,65 @@ fun QuestApp() {
             }
         }
     }
+    rewardPopUpData?.let { popUpData ->
+        RewardPopUp(
+            data = popUpData,
+            onDismiss = {rewardPopUpData = null}
+        )
+    }
+}
+
+@Composable
+fun RewardPopUp(
+    data: RewardPopUpData,
+    onDismiss: () -> Unit
+){
+    val targetProgress = (data.newXp % 100) / 100f
+    val animatedProgress by animateFloatAsState(
+        targetValue = targetProgress,
+        label = "rewardBarAnimation"
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text("Awesome")
+            }
+        },
+        title = {
+            Text("Quest Complete!")
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("+${data.xpGained} XP to ${data.statLabel}")
+
+                Text("${data.statLabel} Lv. ${data.newLevel}")
+
+                LinearProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(50)),
+                    color = data.barColor,
+                    trackColor = data.barColor.copy(alpha = 0.22f),
+                    gapSize = 0.dp,
+                    drawStopIndicator = {}
+                )
+
+                Text("${data.newXp % 100} / 100 XP to next level")
+
+                if(data.newLevel > data.oldLevel){
+                    Text(
+                        text = "Level Up!!",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        }
+    )
 }
