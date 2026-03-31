@@ -9,6 +9,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -59,6 +60,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import kotlin.math.min
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.draw.clip
+import androidx.compose.animation.core.tween
+import kotlinx.coroutines.delay
 
 
 class MainActivity : ComponentActivity() {
@@ -528,18 +531,36 @@ fun RewardPopUp(
     data: RewardPopUpData,
     onDismiss: () -> Unit
 ){
-    var startAnimation by remember { mutableStateOf(false)}
+    val progressAnim = remember { Animatable((data.oldXp % 100) / 100f) }
+    var showLevelUpBanner by remember { mutableStateOf(false) }
 
-    val startProgress = (data.oldXp % 100) / 100f
-    val endProgress = (data.newXp % 100) / 100f
+    LaunchedEffect(data) {
+        val startProgress = (data.oldXp % 100) / 100f
+        val endProgress = (data.newXp % 100) / 100f
 
-    val animatedProgress by animateFloatAsState(
-        targetValue = if (startAnimation) endProgress else startProgress,
-        label = "rewardBarAnimation"
-    )
+        progressAnim.snapTo(startProgress)
 
-    LaunchedEffect(Unit) {
-        startAnimation = true
+        if (data.newLevel > data.oldLevel) {
+            progressAnim.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1400)
+            )
+
+            showLevelUpBanner = true
+            delay(900)
+
+            progressAnim.snapTo(0f)
+
+            progressAnim.animateTo(
+                targetValue = endProgress,
+                animationSpec = tween(durationMillis = 1200)
+            )
+        }else{
+            progressAnim.animateTo(
+                targetValue = endProgress,
+                animationSpec = tween(durationMillis = 1800)
+            )
+        }
     }
 
     AlertDialog(
@@ -550,7 +571,7 @@ fun RewardPopUp(
             }
         },
         title = {
-            Text("Quest Complete!")
+            Text(if(showLevelUpBanner) "LEVEL UP!" else "Quest Complete!")
         },
         text = {
             Column(
@@ -564,7 +585,7 @@ fun RewardPopUp(
                     )
 
                 LinearProgressIndicator(
-                    progress = { animatedProgress },
+                    progress = { progressAnim.value },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(12.dp)
@@ -577,12 +598,19 @@ fun RewardPopUp(
 
                 Text("${data.newXp % 100} / 100 XP to next level")
 
-                if(data.newLevel > data.oldLevel){
-                    Text(
-                        text = "Level Up!!",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                if(showLevelUpBanner){
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Level up"
+                        )
+
+                        Text(
+                            text = "✨ ${data.statLabel} reached Level ${data.newLevel}! ✨",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
             }
         }
