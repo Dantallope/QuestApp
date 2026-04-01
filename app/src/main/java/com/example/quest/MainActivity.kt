@@ -143,6 +143,10 @@ fun QuestApp() {
         val savedDisciplineXp = sharedPreferences.getInt("disciplineXp", 0)
         val savedCharismaXp = sharedPreferences.getInt("charismaXp", 0)
 
+        val savedTitleTemplate = sharedPreferences.getString("challengeTitleTemplate",null)
+        val savedBaseCount = sharedPreferences.getInt("challengeBaseCount",0)
+        val savedCountPerLevel = sharedPreferences.getInt("challengeCountPerLevel",0)
+
         totalXp = savedTotalXp
         strengthXp = savedStrengthXp
         wisdomXp = savedWisdomXp
@@ -163,6 +167,9 @@ fun QuestApp() {
             try {
                 Challenge(
                     title = savedTitle,
+                    titleTemplate = savedTitleTemplate,
+                    baseCount = savedBaseCount,
+                    countPerLevel = savedCountPerLevel,
                     xp = savedXp,
                     statType = StatType.valueOf(savedStatTypeString),
                     difficulty = Difficulty.valueOf(savedDifficultyString),
@@ -191,7 +198,15 @@ fun QuestApp() {
         }
 
         if (savedDate == todayString && savedChallenge != null) {
-            currentChallenge = savedChallenge
+            val statLevel = getStatLevel(savedChallenge.statType)
+
+            val finalTitle = if(!savedChallenge.titleTemplate.isNullOrBlank()){
+                val count = savedChallenge.baseCount + ((statLevel - 1) * savedChallenge.countPerLevel)
+                savedChallenge.titleTemplate.replace("{count}", count.toString())
+            }else {
+                savedChallenge.title
+            }
+            currentChallenge = savedChallenge.copy(title = finalTitle)
             status = savedStatus
         } else {
             if (availableChallenges.isNotEmpty()) {
@@ -215,6 +230,9 @@ fun QuestApp() {
                 sharedPreferences.edit {
                     putString("date", todayString)
                     putString("challengeTitle", newChallenge.title)
+                    putString("challengeTitleTemplate",newChallenge.titleTemplate)
+                    putInt("challengeBaseCount",newChallenge.baseCount)
+                    putInt("challengeCountPerLevel",newChallenge.countPerLevel)
                     putInt("challengeXp", newChallenge.xp)
                     putString("challengeStatType", newChallenge.statType.name)
                     putString("challengeDifficulty", newChallenge.difficulty.name)
