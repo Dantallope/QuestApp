@@ -1,44 +1,57 @@
 [
   {
     "title": "Drink a glass of water",
-    "xp": 5,
+    "xp": 7,
     "statType": "HEALTH",
     "difficulty": "EASY",
-    "minLevel":1
-  },
-  {
-    "title": "Take a 10 minute walk",
-    "xp": 10,
-    "statType": "HEALTH",
-    "difficulty":"EASY",
-    "minLevel":1
-  },
-  {
-    "title": "Read 5 pages",
-    "xp": 10,
-    "statType": "WISDOM",
-    "difficulty":"EASY",
-    "minLevel":1
-  },
-  {
-    "title": "Do 10 push-ups",
-    "xp": 15,
-    "statType": "STRENGTH",
-    "difficulty":"EASY",
-    "minLevel":1
-  },
-  {
-    "title": "Stretch for 5 minutes",
-    "xp": 8,
-    "statType": "DISCIPLINE",
-    "difficulty":"EASY",
-    "minLevel":1
+    "minLevel": 1
   },
   {
     "title": "Compliment someone",
     "xp": 7,
     "statType": "CHARISMA",
-    "difficulty":"EASY",
-    "minLevel":1
+    "difficulty": "EASY",
+    "minLevel": 1
+  },
+  {
+    "title": "Stretch for 5 minutes",
+    "xp": 8,
+    "statType": "DISCIPLINE",
+    "difficulty": "EASY",
+    "minLevel": 1
+  },
+  {
+    "title": "Take a 10 minute walk",
+    "xp": 10,
+    "statType": "HEALTH",
+    "difficulty": "EASY",
+    "minLevel": 1
+  },
+  {
+    "title": "Read 5 pages",
+    "xp": 10,
+    "statType": "WISDOM",
+    "difficulty": "EASY",
+    "minLevel": 1
+  },
+  {
+    "title": "Do Push-Ups",
+    "titleTemplate": "Do {count} Push-Ups",
+    "baseCount": 10,
+    "countPerLevel": 10,
+    "xp": 10,
+    "statType": "STRENGTH",
+    "difficulty": "EASY",
+    "minLevel": 1
+  },
+  {
+    "title": "Meditate",
+    "titleTemplate": "Meditate for {count} Minutes",
+    "baseCount": 1,
+    "countPerLevel": 1,
+    "xp": 10,
+    "statType": "WISDOM",
+    "difficulty": "EASY",
+    "minLevel": 1
   }
 ]

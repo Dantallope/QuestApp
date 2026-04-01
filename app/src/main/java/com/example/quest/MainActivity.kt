@@ -62,6 +62,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.animation.core.tween
 import kotlinx.coroutines.delay
+import kotlin.div
 
 
 class MainActivity : ComponentActivity() {
@@ -106,6 +107,16 @@ fun QuestApp() {
     var healthXp by remember { mutableIntStateOf(0) }
     var disciplineXp by remember { mutableIntStateOf(0) }
     var charismaXp by remember { mutableIntStateOf(0) }
+
+    fun getStatLevel(statType: StatType): Int{
+        return when (statType){
+            StatType.STRENGTH -> (strengthXp / 100) + 1
+            StatType.WISDOM -> (wisdomXp / 100) + 1
+            StatType.HEALTH -> (healthXp / 100) + 1
+            StatType.DISCIPLINE -> (disciplineXp / 100) + 1
+            StatType.CHARISMA -> (charismaXp / 100) + 1
+        }
+    }
 
     val sharedPreferences =
         context.getSharedPreferences("daily_challenge_prefs", Context.MODE_PRIVATE)
@@ -184,7 +195,20 @@ fun QuestApp() {
             status = savedStatus
         } else {
             if (availableChallenges.isNotEmpty()) {
-                val newChallenge = availableChallenges.random()
+                val baseChallenge = availableChallenges.random()
+
+                val statLevel = getStatLevel(baseChallenge.statType)
+
+                val finalTitle = if(!baseChallenge.titleTemplate.isNullOrBlank()){
+                    val count = baseChallenge.baseCount + ((statLevel - 1) * baseChallenge.countPerLevel)
+                    baseChallenge.titleTemplate.replace("{count}",count.toString())
+                }else{
+                    baseChallenge.title
+                }
+
+                val newChallenge = baseChallenge.copy(
+                    title = finalTitle
+                )
                 currentChallenge = newChallenge
                 status = "Not completed yet"
 
