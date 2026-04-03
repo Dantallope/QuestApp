@@ -5,6 +5,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.quest.screens.QuestScreen
 import com.example.quest.screens.StatsScreen
 import com.example.quest.screens.SettingsScreen
+import com.example.quest.screens.SkillsScreen
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -86,7 +87,6 @@ fun QuestApp() {
         ChallengeRepo.loadChallenges(context)
     }
 
-
     var currentChallenge by remember {
         mutableStateOf<Challenge?>(null)
     }
@@ -107,6 +107,8 @@ fun QuestApp() {
     var healthXp by remember { mutableIntStateOf(0) }
     var disciplineXp by remember { mutableIntStateOf(0) }
     var charismaXp by remember { mutableIntStateOf(0) }
+
+    var skills by remember { mutableStateOf(listOf<Skill>()) }
 
     fun getStatLevel(statType: StatType): Int{
         return when (statType){
@@ -284,6 +286,14 @@ fun QuestApp() {
                     label = { Text("Settings") },
                     selected = false,
                     onClick = {
+                        scope.launch { drawerState.close() }
+                    }
+                )
+                NavigationDrawerItem(
+                    label = {Text("Skills")},
+                    selected = selectedScreen == "skills",
+                    onClick = {
+                        selectedScreen = "skills"
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -555,6 +565,16 @@ fun QuestApp() {
                         sharedPreferences.edit {
                             clear()
                         }
+                    }
+                )
+                "skills" -> SkillsScreen(
+                    innerPadding = innerPadding,
+                    skills = skills,
+                    onAddSkill = {newSkill ->
+                        skills = skills + newSkill
+                    },
+                    onDeleteSkill = {skillToDelete ->
+                        skills = skills.filter {it.id != skillToDelete.id}
                     }
                 )
             }

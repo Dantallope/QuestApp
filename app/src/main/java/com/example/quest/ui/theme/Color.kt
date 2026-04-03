@@ -14,6 +14,6 @@ val CardColor = Color(0xFFFFFFFF)
 val PrimaryButton = Color(0xFF4CAF50)
 val SecondaryButton = Color(0xFFF44336)
 
-val AppBackgroundDark = Color(0xFF22223F)
-val CardColorDark = Color(0xFF1C2755)
+val AppBackgroundDark = Color(0xFF000000)
+val CardColorDark = Color(0xFF131313)
 val PrimaryButtonDark = Color(0xFF3658D7)

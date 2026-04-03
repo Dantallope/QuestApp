@@ -15,6 +15,9 @@
   },
   {
     "title": "Stretch for 5 minutes",
+    "titleTemplate": "Stretch for {count} minutes",
+    "baseCount": 5,
+    "countPerLevel": 5,
     "xp": 8,
     "statType": "DISCIPLINE",
     "difficulty": "EASY",
@@ -22,6 +25,9 @@
   },
   {
     "title": "Take a 10 minute walk",
+    "titleTemplate": "Take a {count} Minute Walk",
+    "baseCount": 5,
+    "countPerLevel": 5,
     "xp": 10,
     "statType": "HEALTH",
     "difficulty": "EASY",
@@ -29,6 +35,9 @@
   },
   {
     "title": "Read 5 pages",
+    "titleTemplate": "Read {count} pages",
+    "baseCount": 1,
+    "countPerLevel": 1,
     "xp": 10,
     "statType": "WISDOM",
     "difficulty": "EASY",
