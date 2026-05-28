@@ -2,18 +2,16 @@ package com.example.quest.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val QuestGreen = Color(0xFF2F7D57)
+val QuestGold = Color(0xFFC28B2C)
+val QuestBackground = Color(0xFFF7F3EA)
+val QuestSurface = Color(0xFFFFFCF5)
+val QuestText = Color(0xFF1E2522)
+val QuestMutedText = Color(0xFF68746D)
+val QuestError = Color(0xFFB8463F)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
-val AppBackground = Color(0xFFF5F5F5)
-val CardColor = Color(0xFFFFFFFF)
-val PrimaryButton = Color(0xFF4CAF50)
-val SecondaryButton = Color(0xFFF44336)
-
-val AppBackgroundDark = Color(0xFF000000)
-val CardColorDark = Color(0xFF131313)
-val PrimaryButtonDark = Color(0xFF3658D7)
+val QuestGreenDark = Color(0xFF78D6A2)
+val QuestGoldDark = Color(0xFFE7B85D)
+val QuestBackgroundDark = Color(0xFF101412)
+val QuestSurfaceDark = Color(0xFF1A211E)
+val QuestTextDark = Color(0xFFEAF1EC)

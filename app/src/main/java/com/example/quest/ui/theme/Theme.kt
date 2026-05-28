@@ -12,18 +12,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryButtonDark,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
-    background = AppBackgroundDark,
-    surface = CardColorDark
+    primary = QuestGreenDark,
+    secondary = QuestGoldDark,
+    tertiary = QuestGoldDark,
+    background = QuestBackgroundDark,
+    surface = QuestSurfaceDark,
+    onPrimary = QuestBackgroundDark,
+    onSecondary = QuestBackgroundDark,
+    onBackground = QuestTextDark,
+    onSurface = QuestTextDark,
+    error = QuestError
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = PrimaryButton,
-    secondary = SecondaryButton,
-    background = AppBackground,
-    surface = CardColor
+    primary = QuestGreen,
+    secondary = QuestGold,
+    tertiary = QuestGold,
+    background = QuestBackground,
+    surface = QuestSurface,
+    onPrimary = QuestSurface,
+    onSecondary = QuestText,
+    onBackground = QuestText,
+    onSurface = QuestText,
+    error = QuestError
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
