@@ -32,17 +32,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.quest.Skill
 import com.example.quest.StatType
+import java.time.LocalDate
 
 @Composable
 fun SkillsScreen(
     innerPadding: PaddingValues,
     skills: List<Skill>,
     onAddSkill: (Skill) -> Unit,
-    onDeleteSkill: (Skill) -> Unit
+    onDeleteSkill: (Skill) -> Unit,
+    onCompleteSkill: (Skill) -> Unit
 ) {
     var skillName by remember { mutableStateOf("") }
     var xp by remember { mutableStateOf("10") }
     var selectedStat by remember { mutableStateOf(StatType.STRENGTH) }
+    val todayString = LocalDate.now().toString()
 
     Column(
         modifier = Modifier
@@ -164,7 +167,9 @@ fun SkillsScreen(
                 items(skills) { skill ->
                     SkillCard(
                         skill = skill,
-                        onDeleteSkill = onDeleteSkill
+                        completedToday = skill.lastCompletedDate == todayString,
+                        onDeleteSkill = onDeleteSkill,
+                        onCompleteSkill = onCompleteSkill
                     )
                 }
             }
@@ -209,7 +214,9 @@ fun StatTypeDropdown(
 @Composable
 private fun SkillCard(
     skill: Skill,
-    onDeleteSkill: (Skill) -> Unit
+    completedToday: Boolean,
+    onDeleteSkill: (Skill) -> Unit,
+    onCompleteSkill: (Skill) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -223,9 +230,12 @@ private fun SkillCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = skill.name,
                     style = MaterialTheme.typography.titleMedium,
@@ -237,13 +247,34 @@ private fun SkillCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
                 )
+                Text(
+                    text = if (completedToday) "Available again tomorrow" else "Ready to complete",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (completedToday) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f)
+                    }
+                )
             }
 
-            OutlinedButton(
-                onClick = { onDeleteSkill(skill) },
-                shape = RoundedCornerShape(8.dp)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Delete")
+                Button(
+                    onClick = { onCompleteSkill(skill) },
+                    enabled = !completedToday,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(if (completedToday) "Done Today" else "Complete")
+                }
+
+                OutlinedButton(
+                    onClick = { onDeleteSkill(skill) },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Delete")
+                }
             }
         }
     }

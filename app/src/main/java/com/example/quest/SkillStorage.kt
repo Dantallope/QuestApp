@@ -18,7 +18,9 @@ object SkillStorage {
                     name = skillObject.getString("name"),
                     statType = StatType.valueOf(skillObject.getString("statType")),
                     xp = skillObject.getInt("xp"),
-                    recurrence = skillObject.optString("recurrence", "DAILY")
+                    recurrence = skillObject.optString("recurrence", "DAILY"),
+                    lastCompletedDate = skillObject.optString("lastCompletedDate")
+                        .takeIf { it.isNotBlank() }
                 )
             }
         } catch (e: Exception) {
@@ -39,6 +41,7 @@ object SkillStorage {
                     .put("statType", skill.statType.name)
                     .put("xp", skill.xp)
                     .put("recurrence", skill.recurrence)
+                    .put("lastCompletedDate", skill.lastCompletedDate ?: "")
             )
         }
 

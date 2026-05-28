@@ -106,6 +106,20 @@ fun QuestApp() {
         }
     }
 
+    fun statLabel(statType: StatType): String {
+        return statType.name.lowercase().replaceFirstChar { it.uppercase() }
+    }
+
+    fun statColor(statType: StatType): Color {
+        return when (statType) {
+            StatType.STRENGTH -> Color(0xFFE57373)
+            StatType.WISDOM -> Color(0xFF00B4C9)
+            StatType.HEALTH -> Color(0xFF00BB06)
+            StatType.DISCIPLINE -> Color(0xFF9C27B0)
+            StatType.CHARISMA -> Color(0xFFFFC107)
+        }
+    }
+
     val sharedPreferences =
         context.getSharedPreferences("daily_challenge_prefs", Context.MODE_PRIVATE)
 
@@ -520,6 +534,62 @@ fun QuestApp() {
                     onDeleteSkill = {skillToDelete ->
                         skills = skills.filter {it.id != skillToDelete.id}
                         SkillStorage.save(sharedPreferences, skills)
+                    },
+                    onCompleteSkill = { skillToComplete ->
+                        val todayString = LocalDate.now().toString()
+
+                        if (skillToComplete.lastCompletedDate != todayString) {
+                            val oldXp = when (skillToComplete.statType) {
+                                StatType.STRENGTH -> strengthXp
+                                StatType.WISDOM -> wisdomXp
+                                StatType.HEALTH -> healthXp
+                                StatType.DISCIPLINE -> disciplineXp
+                                StatType.CHARISMA -> charismaXp
+                            }
+                            val oldLevel = (oldXp / 100) + 1
+
+                            totalXp += skillToComplete.xp
+
+                            when (skillToComplete.statType) {
+                                StatType.STRENGTH -> strengthXp += skillToComplete.xp
+                                StatType.WISDOM -> wisdomXp += skillToComplete.xp
+                                StatType.HEALTH -> healthXp += skillToComplete.xp
+                                StatType.DISCIPLINE -> disciplineXp += skillToComplete.xp
+                                StatType.CHARISMA -> charismaXp += skillToComplete.xp
+                            }
+
+                            val newXp = oldXp + skillToComplete.xp
+                            val newLevel = (newXp / 100) + 1
+
+                            skills = skills.map { skill ->
+                                if (skill.id == skillToComplete.id) {
+                                    skill.copy(lastCompletedDate = todayString)
+                                } else {
+                                    skill
+                                }
+                            }
+
+                            SkillStorage.save(sharedPreferences, skills)
+
+                            sharedPreferences.edit {
+                                putInt("totalXp", totalXp)
+                                putInt("strengthXp", strengthXp)
+                                putInt("wisdomXp", wisdomXp)
+                                putInt("healthXp", healthXp)
+                                putInt("disciplineXp", disciplineXp)
+                                putInt("charismaXp", charismaXp)
+                            }
+
+                            rewardPopUpData = RewardPopUpData(
+                                statLabel = statLabel(skillToComplete.statType),
+                                xpGained = skillToComplete.xp,
+                                oldXp = oldXp,
+                                newXp = newXp,
+                                oldLevel = oldLevel,
+                                newLevel = newLevel,
+                                barColor = statColor(skillToComplete.statType)
+                            )
+                        }
                     }
                 )
             }

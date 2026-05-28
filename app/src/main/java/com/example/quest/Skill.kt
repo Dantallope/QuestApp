@@ -5,5 +5,6 @@ data class Skill(
     val name: String,
     val statType: StatType,
     val xp: Int,
-    val recurrence: String = "DAILY"
+    val recurrence: String = "DAILY",
+    val lastCompletedDate: String? = null
 )
