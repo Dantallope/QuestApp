@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -26,15 +28,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import com.example.quest.screens.QuestScreen
@@ -128,6 +134,8 @@ fun QuestApp() {
         val savedTitleTemplate = sharedPreferences.getString("challengeTitleTemplate",null)
         val savedBaseCount = sharedPreferences.getInt("challengeBaseCount",0)
         val savedCountPerLevel = sharedPreferences.getInt("challengeCountPerLevel",0)
+
+        skills = SkillStorage.load(sharedPreferences)
 
         totalXp = savedTotalXp
         strengthXp = savedStrengthXp
@@ -495,6 +503,7 @@ fun QuestApp() {
                         healthXp = 0
                         disciplineXp = 0
                         charismaXp = 0
+                        skills = emptyList()
 
                         sharedPreferences.edit {
                             clear()
@@ -506,15 +515,17 @@ fun QuestApp() {
                     skills = skills,
                     onAddSkill = {newSkill ->
                         skills = skills + newSkill
+                        SkillStorage.save(sharedPreferences, skills)
                     },
                     onDeleteSkill = {skillToDelete ->
                         skills = skills.filter {it.id != skillToDelete.id}
+                        SkillStorage.save(sharedPreferences, skills)
                     }
                 )
             }
         }
     rewardPopUpData?.let { popUpData ->
-        RewardPopUp(
+        RewardCelebrationDialog(
             data = popUpData,
             onDismiss = {rewardPopUpData = null}
         )
@@ -604,6 +615,155 @@ fun RewardPopUp(
                             text = "✨ ${data.statLabel} reached Level ${data.newLevel}! ✨",
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun RewardCelebrationDialog(
+    data: RewardPopUpData,
+    onDismiss: () -> Unit
+) {
+    val progressAnim = remember { Animatable((data.oldXp % 100) / 100f) }
+    var showLevelUpBanner by remember { mutableStateOf(false) }
+
+    LaunchedEffect(data) {
+        val endProgress = (data.newXp % 100) / 100f
+
+        progressAnim.snapTo((data.oldXp % 100) / 100f)
+
+        if (data.newLevel > data.oldLevel) {
+            progressAnim.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1200)
+            )
+            showLevelUpBanner = true
+            delay(650)
+            progressAnim.snapTo(0f)
+            progressAnim.animateTo(
+                targetValue = endProgress,
+                animationSpec = tween(durationMillis = 900)
+            )
+        } else {
+            progressAnim.animateTo(
+                targetValue = endProgress,
+                animationSpec = tween(durationMillis = 1400)
+            )
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = data.barColor.copy(alpha = 0.18f)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(32.dp),
+                    tint = data.barColor
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Awesome")
+            }
+        },
+        title = {
+            Text(
+                text = if (showLevelUpBanner) "Level Up!" else "Quest Complete",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "+${data.xpGained} XP to ${data.statLabel}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = data.barColor
+                )
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = data.statLabel,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Lv. ${data.newLevel}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        LinearProgressIndicator(
+                            progress = { progressAnim.value },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(12.dp)
+                                .clip(RoundedCornerShape(50)),
+                            color = data.barColor,
+                            trackColor = data.barColor.copy(alpha = 0.22f),
+                            gapSize = 0.dp,
+                            drawStopIndicator = {}
+                        )
+
+                        Text(
+                            text = "${data.newXp % 100} / 100 XP to next level",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
+                        )
+                    }
+                }
+
+                if (showLevelUpBanner) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = data.barColor
+                        )
+
+                        Text(
+                            text = "${data.statLabel} reached Level ${data.newLevel}",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
