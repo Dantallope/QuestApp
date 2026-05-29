@@ -90,6 +90,7 @@ fun QuestApp() {
     var totalXp by remember { mutableIntStateOf(0) }
     var strengthXp by remember { mutableIntStateOf(0) }
     var wisdomXp by remember { mutableIntStateOf(0) }
+
     var healthXp by remember { mutableIntStateOf(0) }
     var disciplineXp by remember { mutableIntStateOf(0) }
     var charismaXp by remember { mutableIntStateOf(0) }
@@ -98,11 +99,11 @@ fun QuestApp() {
 
     fun getStatLevel(statType: StatType): Int{
         return when (statType){
-            StatType.STRENGTH -> (strengthXp / 100) + 1
-            StatType.WISDOM -> (wisdomXp / 100) + 1
-            StatType.HEALTH -> (healthXp / 100) + 1
-            StatType.DISCIPLINE -> (disciplineXp / 100) + 1
-            StatType.CHARISMA -> (charismaXp / 100) + 1
+            StatType.STRENGTH -> LevelingSystem.levelForXp(strengthXp)
+            StatType.WISDOM -> LevelingSystem.levelForXp(wisdomXp)
+            StatType.HEALTH -> LevelingSystem.levelForXp(healthXp)
+            StatType.DISCIPLINE -> LevelingSystem.levelForXp(disciplineXp)
+            StatType.CHARISMA -> LevelingSystem.levelForXp(charismaXp)
         }
     }
 
@@ -158,7 +159,7 @@ fun QuestApp() {
         disciplineXp = savedDisciplineXp
         charismaXp = savedCharismaXp
 
-        val playerLevel = (totalXp / 100) + 1
+        val playerLevel = LevelingSystem.levelForXp(totalXp)
         val availableChallenges =
             challenges.filter { challenge -> challenge.minLevel <= playerLevel }
 
@@ -341,10 +342,10 @@ fun QuestApp() {
                                 when (challenge.statType) {
                                     StatType.STRENGTH -> {
                                         val oldXp = strengthXp
-                                        val oldLevel = (oldXp / 100) + 1
+                                        val oldLevel = LevelingSystem.levelForXp(oldXp)
                                         strengthXp += challenge.xp
                                         val newXp = strengthXp
-                                        val newLevel = (newXp / 100) + 1
+                                        val newLevel = LevelingSystem.levelForXp(newXp)
 
                                         rewardPopUpData = RewardPopUpData(
                                             statLabel = "Strength",
@@ -359,10 +360,10 @@ fun QuestApp() {
 
                                     StatType.WISDOM -> {
                                         val oldXp = wisdomXp
-                                        val oldLevel = (oldXp / 100) + 1
+                                        val oldLevel = LevelingSystem.levelForXp(oldXp)
                                         wisdomXp += challenge.xp
                                         val newXp = wisdomXp
-                                        val newLevel = (newXp / 100) + 1
+                                        val newLevel = LevelingSystem.levelForXp(newXp)
 
                                         rewardPopUpData = RewardPopUpData(
                                             statLabel = "Wisdom",
@@ -377,10 +378,10 @@ fun QuestApp() {
 
                                     StatType.HEALTH -> {
                                         val oldXp = healthXp
-                                        val oldLevel = (oldXp / 100) + 1
+                                        val oldLevel = LevelingSystem.levelForXp(oldXp)
                                         healthXp += challenge.xp
                                         val newXp = healthXp
-                                        val newLevel = (newXp / 100) + 1
+                                        val newLevel = LevelingSystem.levelForXp(newXp)
 
                                         rewardPopUpData = RewardPopUpData(
                                             statLabel = "Health",
@@ -395,10 +396,10 @@ fun QuestApp() {
 
                                     StatType.DISCIPLINE -> {
                                         val oldXp = disciplineXp
-                                        val oldLevel = (oldXp / 100) + 1
+                                        val oldLevel = LevelingSystem.levelForXp(oldXp)
                                         disciplineXp += challenge.xp
                                         val newXp = disciplineXp
-                                        val newLevel = (newXp / 100) + 1
+                                        val newLevel = LevelingSystem.levelForXp(newXp)
 
                                         rewardPopUpData = RewardPopUpData(
                                             statLabel = "Discipline",
@@ -413,10 +414,10 @@ fun QuestApp() {
 
                                     StatType.CHARISMA -> {
                                         val oldXp = charismaXp
-                                        val oldLevel = (oldXp / 100) + 1
+                                        val oldLevel = LevelingSystem.levelForXp(oldXp)
                                         charismaXp += challenge.xp
                                         val newXp = charismaXp
-                                        val newLevel = (newXp / 100) + 1
+                                        val newLevel = LevelingSystem.levelForXp(newXp)
 
                                         rewardPopUpData = RewardPopUpData(
                                             statLabel = "Charisma",
@@ -546,7 +547,7 @@ fun QuestApp() {
                                 StatType.DISCIPLINE -> disciplineXp
                                 StatType.CHARISMA -> charismaXp
                             }
-                            val oldLevel = (oldXp / 100) + 1
+                            val oldLevel = LevelingSystem.levelForXp(oldXp)
 
                             totalXp += skillToComplete.xp
 
@@ -559,7 +560,7 @@ fun QuestApp() {
                             }
 
                             val newXp = oldXp + skillToComplete.xp
-                            val newLevel = (newXp / 100) + 1
+                            val newLevel = LevelingSystem.levelForXp(newXp)
 
                             skills = skills.map { skill ->
                                 if (skill.id == skillToComplete.id) {
@@ -607,12 +608,12 @@ fun RewardPopUp(
     data: RewardPopUpData,
     onDismiss: () -> Unit
 ){
-    val progressAnim = remember { Animatable((data.oldXp % 100) / 100f) }
+    val progressAnim = remember { Animatable(LevelingSystem.progressToNextLevel(data.oldXp)) }
     var showLevelUpBanner by remember { mutableStateOf(false) }
 
     LaunchedEffect(data) {
-        val startProgress = (data.oldXp % 100) / 100f
-        val endProgress = (data.newXp % 100) / 100f
+        val startProgress = LevelingSystem.progressToNextLevel(data.oldXp)
+        val endProgress = LevelingSystem.progressToNextLevel(data.newXp)
 
         progressAnim.snapTo(startProgress)
 
@@ -672,7 +673,7 @@ fun RewardPopUp(
                     drawStopIndicator = {}
                 )
 
-                Text("${data.newXp % 100} / 100 XP to next level")
+                Text("${LevelingSystem.xpIntoCurrentLevel(data.newXp)} / ${LevelingSystem.xpNeededForNextLevel(data.newXp)} XP to next level")
 
                 if(showLevelUpBanner){
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -698,13 +699,15 @@ fun RewardCelebrationDialog(
     data: RewardPopUpData,
     onDismiss: () -> Unit
 ) {
-    val progressAnim = remember { Animatable((data.oldXp % 100) / 100f) }
+    val progressAnim = remember { Animatable(LevelingSystem.progressToNextLevel(data.oldXp)) }
     var showLevelUpBanner by remember { mutableStateOf(false) }
+    val xpIntoLevel = LevelingSystem.xpIntoCurrentLevel(data.newXp)
+    val xpNeededForNextLevel = LevelingSystem.xpNeededForNextLevel(data.newXp)
 
     LaunchedEffect(data) {
-        val endProgress = (data.newXp % 100) / 100f
+        val endProgress = LevelingSystem.progressToNextLevel(data.newXp)
 
-        progressAnim.snapTo((data.oldXp % 100) / 100f)
+        progressAnim.snapTo(LevelingSystem.progressToNextLevel(data.oldXp))
 
         if (data.newLevel > data.oldLevel) {
             progressAnim.animateTo(
@@ -811,7 +814,11 @@ fun RewardCelebrationDialog(
                         )
 
                         Text(
-                            text = "${data.newXp % 100} / 100 XP to next level",
+                            text = if (xpNeededForNextLevel == 0) {
+                                "Max level reached"
+                            } else {
+                                "$xpIntoLevel / $xpNeededForNextLevel XP to next level"
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
                         )

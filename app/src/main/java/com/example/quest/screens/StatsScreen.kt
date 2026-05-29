@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.quest.LevelingSystem
 
 @Composable
 fun StatsScreen(
@@ -36,7 +37,7 @@ fun StatsScreen(
     charismaXp: Int,
     streak: Int
 ) {
-    val playerLevel = (totalXp / 100) + 1
+    val playerLevel = LevelingSystem.levelForXp(totalXp)
     val scrollState = rememberScrollState()
 
     Column(
@@ -137,8 +138,10 @@ private fun StatProgressRow(
     xp: Int,
     barColor: Color
 ) {
-    val level = (xp / 100) + 1
-    val progress = (xp % 100) / 100f
+    val level = LevelingSystem.levelForXp(xp)
+    val progress = LevelingSystem.progressToNextLevel(xp)
+    val xpIntoLevel = LevelingSystem.xpIntoCurrentLevel(xp)
+    val xpNeededForNextLevel = LevelingSystem.xpNeededForNextLevel(xp)
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -176,7 +179,11 @@ private fun StatProgressRow(
         )
 
         Text(
-            text = "${xp % 100} / 100 XP to next level",
+            text = if (xpNeededForNextLevel == 0) {
+                "Max level reached"
+            } else {
+                "$xpIntoLevel / $xpNeededForNextLevel XP to next level"
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
         )

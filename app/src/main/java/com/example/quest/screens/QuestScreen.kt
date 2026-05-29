@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.quest.Challenge
+import com.example.quest.LevelingSystem
 
 @Composable
 fun QuestScreen(
@@ -38,8 +39,10 @@ fun QuestScreen(
     val statName = currentChallenge?.statType?.name
         ?.lowercase()
         ?.replaceFirstChar { it.uppercase() } ?: "Unknown"
-    val playerLevel = (totalXp / 100) + 1
-    val levelProgress = (totalXp % 100) / 100f
+    val playerLevel = LevelingSystem.levelForXp(totalXp)
+    val xpIntoLevel = LevelingSystem.xpIntoCurrentLevel(totalXp)
+    val xpNeededForNextLevel = LevelingSystem.xpNeededForNextLevel(totalXp)
+    val levelProgress = LevelingSystem.progressToNextLevel(totalXp)
     val isComplete = status == "Completed!"
 
     Column(
@@ -183,7 +186,11 @@ fun QuestScreen(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "${totalXp % 100} / 100 XP",
+                        text = if (xpNeededForNextLevel == 0) {
+                            "Max level"
+                        } else {
+                            "$xpIntoLevel / $xpNeededForNextLevel XP"
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
                     )
