@@ -3,6 +3,7 @@
     "title": "Drink a glass of water",
     "xp": 7,
     "statType": "HEALTH",
+    "pool": "STARTER",
     "difficulty": "EASY",
     "minLevel": 1
   },
@@ -10,6 +11,7 @@
     "title": "Compliment someone",
     "xp": 7,
     "statType": "CHARISMA",
+    "pool": "STARTER",
     "difficulty": "EASY",
     "minLevel": 1
   },
@@ -19,7 +21,8 @@
     "baseCount": 5,
     "countPerLevel": 5,
     "xp": 8,
-    "statType": "DISCIPLINE",
+    "statType": "HEALTH",
+    "pool": "HEALTH",
     "difficulty": "EASY",
     "minLevel": 1
   },
@@ -30,6 +33,7 @@
     "countPerLevel": 5,
     "xp": 10,
     "statType": "HEALTH",
+    "pool": "HEALTH",
     "difficulty": "EASY",
     "minLevel": 1
   },
@@ -40,6 +44,7 @@
     "countPerLevel": 1,
     "xp": 10,
     "statType": "WISDOM",
+    "pool": "WISDOM",
     "difficulty": "EASY",
     "minLevel": 1
   },
@@ -50,6 +55,7 @@
     "countPerLevel": 10,
     "xp": 10,
     "statType": "STRENGTH",
+    "pool": "STRENGTH",
     "difficulty": "EASY",
     "minLevel": 1
   },
@@ -60,6 +66,7 @@
     "countPerLevel": 1,
     "xp": 10,
     "statType": "WISDOM",
+    "pool": "WISDOM",
     "difficulty": "EASY",
     "minLevel": 1
   }

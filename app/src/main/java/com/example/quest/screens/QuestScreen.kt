@@ -16,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +35,9 @@ fun QuestScreen(
     status: String,
     streak: Int,
     totalXp: Int,
+    rerollUsed: Boolean,
     onMarkComplete: () -> Unit,
+    onRerollQuest: () -> Unit,
 ) {
     val statName = currentChallenge?.statType?.name
         ?.lowercase()
@@ -44,6 +47,7 @@ fun QuestScreen(
     val xpNeededForNextLevel = LevelingSystem.xpNeededForNextLevel(totalXp)
     val levelProgress = LevelingSystem.progressToNextLevel(totalXp)
     val isComplete = status == "Completed!"
+    val canReroll = !isComplete && !rerollUsed && currentChallenge != null
 
     Column(
         modifier = Modifier
@@ -78,7 +82,7 @@ fun QuestScreen(
                 modifier = Modifier.weight(1f)
             )
             SummaryTile(
-                label = "Level",
+                label = "Discipline",
                 value = "$playerLevel",
                 modifier = Modifier.weight(1f)
             )
@@ -141,24 +145,47 @@ fun QuestScreen(
                     )
                 }
 
-                Button(
-                    onClick = onMarkComplete,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    enabled = !isComplete,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                        disabledContentColor = MaterialTheme.colorScheme.primary
-                    )
+                DetailPill(
+                    label = "Pool",
+                    value = currentChallenge?.pool?.name?.lowercase()
+                        ?.replaceFirstChar { it.uppercase() } ?: "Unknown",
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        text = if (isComplete) "Quest Complete" else "Complete Quest",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    OutlinedButton(
+                        onClick = onRerollQuest,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp),
+                        enabled = canReroll,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(if (rerollUsed) "Rerolled" else "Reroll")
+                    }
+
+                    Button(
+                        onClick = onMarkComplete,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp),
+                        enabled = !isComplete,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                            disabledContentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(
+                            text = if (isComplete) "Complete" else "Complete",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
             }
         }
@@ -181,7 +208,7 @@ fun QuestScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Level $playerLevel progress",
+                        text = "Discipline Lv. $playerLevel progress",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )

@@ -5,6 +5,7 @@ data class Challenge(
     val titleTemplate: String? = null,
     val xp:Int,
     val statType: StatType,
+    val pool: QuestPool,
     val difficulty: Difficulty,
     val minLevel: Int,
     val baseCount: Int = 0,

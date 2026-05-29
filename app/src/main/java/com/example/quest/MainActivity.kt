@@ -86,13 +86,13 @@ fun QuestApp() {
     }
 
     var rewardPopUpData by remember { mutableStateOf<RewardPopUpData?>(null) }
+    var rerollUsed by remember { mutableStateOf(false) }
 
     var totalXp by remember { mutableIntStateOf(0) }
     var strengthXp by remember { mutableIntStateOf(0) }
     var wisdomXp by remember { mutableIntStateOf(0) }
 
     var healthXp by remember { mutableIntStateOf(0) }
-    var disciplineXp by remember { mutableIntStateOf(0) }
     var charismaXp by remember { mutableIntStateOf(0) }
 
     var skills by remember { mutableStateOf(listOf<Skill>()) }
@@ -102,7 +102,6 @@ fun QuestApp() {
             StatType.STRENGTH -> LevelingSystem.levelForXp(strengthXp)
             StatType.WISDOM -> LevelingSystem.levelForXp(wisdomXp)
             StatType.HEALTH -> LevelingSystem.levelForXp(healthXp)
-            StatType.DISCIPLINE -> LevelingSystem.levelForXp(disciplineXp)
             StatType.CHARISMA -> LevelingSystem.levelForXp(charismaXp)
         }
     }
@@ -111,18 +110,90 @@ fun QuestApp() {
         return statType.name.lowercase().replaceFirstChar { it.uppercase() }
     }
 
+    fun parseSavedStatType(savedStatType: String): StatType {
+        return if (savedStatType == "DISCIPLINE") {
+            StatType.HEALTH
+        } else {
+            StatType.valueOf(savedStatType)
+        }
+    }
+
+    fun parseSavedQuestPool(savedPool: String, fallbackStatType: StatType): QuestPool {
+        return try {
+            if (savedPool == "DISCIPLINE") {
+                QuestPool.HEALTH
+            } else if (savedPool.isNotEmpty()) {
+                QuestPool.valueOf(savedPool)
+            } else {
+                QuestPool.valueOf(fallbackStatType.name)
+            }
+        } catch (e: Exception) {
+            QuestPool.HEALTH
+        }
+    }
+
     fun statColor(statType: StatType): Color {
         return when (statType) {
             StatType.STRENGTH -> Color(0xFFE57373)
             StatType.WISDOM -> Color(0xFF00B4C9)
             StatType.HEALTH -> Color(0xFF00BB06)
-            StatType.DISCIPLINE -> Color(0xFF9C27B0)
             StatType.CHARISMA -> Color(0xFFFFC107)
         }
     }
 
     val sharedPreferences =
         context.getSharedPreferences("daily_challenge_prefs", Context.MODE_PRIVATE)
+
+    fun prepareChallenge(baseChallenge: Challenge): Challenge {
+        val statLevel = getStatLevel(baseChallenge.statType)
+        val finalTitle = if(!baseChallenge.titleTemplate.isNullOrBlank()){
+            val count = baseChallenge.baseCount + ((statLevel - 1) * baseChallenge.countPerLevel)
+            baseChallenge.titleTemplate.replace("{count}", count.toString())
+        }else{
+            baseChallenge.title
+        }
+
+        return baseChallenge.copy(title = finalTitle)
+    }
+
+    fun selectChallenge(
+        availableChallenges: List<Challenge>,
+        avoidTitle: String? = null
+    ): Challenge? {
+        if (availableChallenges.isEmpty()) return null
+
+        val dailyPool = QuestPool.values()[LocalDate.now().dayOfYear % QuestPool.values().size]
+        val poolChallenges = availableChallenges.filter { challenge -> challenge.pool == dailyPool }
+        val firstPass = if (poolChallenges.isNotEmpty()) poolChallenges else availableChallenges
+        val rerollOptions = if (avoidTitle == null) {
+            firstPass
+        } else {
+            firstPass.filter { challenge -> (challenge.titleTemplate ?: challenge.title) != avoidTitle }.ifEmpty {
+                availableChallenges.filter { challenge -> (challenge.titleTemplate ?: challenge.title) != avoidTitle }
+            }
+        }
+
+        return (rerollOptions.ifEmpty { firstPass }).random()
+    }
+
+    fun saveCurrentChallenge(
+        challenge: Challenge,
+        todayString: String
+    ) {
+        sharedPreferences.edit {
+            putString("date", todayString)
+            putString("challengeTitle", challenge.title)
+            putString("challengeTitleTemplate",challenge.titleTemplate)
+            putInt("challengeBaseCount",challenge.baseCount)
+            putInt("challengeCountPerLevel",challenge.countPerLevel)
+            putInt("challengeXp", challenge.xp)
+            putString("challengeStatType", challenge.statType.name)
+            putString("challengePool", challenge.pool.name)
+            putString("challengeDifficulty", challenge.difficulty.name)
+            putInt("challengeMinLevel", challenge.minLevel)
+            putString("status", status)
+        }
+    }
 
     LaunchedEffect(Unit) {
         val today = LocalDate.now()
@@ -132,18 +203,20 @@ fun QuestApp() {
         val savedTitle = sharedPreferences.getString("challengeTitle", "") ?: ""
         val savedXp = sharedPreferences.getInt("challengeXp", 0)
         val savedStatTypeString = sharedPreferences.getString("challengeStatType", "") ?: ""
+        val savedPoolString = sharedPreferences.getString("challengePool", "") ?: ""
         val savedStatus =
             sharedPreferences.getString("status", "Not completed yet") ?: "Not completed yet"
         val savedStreak = sharedPreferences.getInt("streak", 0)
         val savedLastCompletedDate = sharedPreferences.getString("lastCompletedDate", "") ?: ""
         val savedDifficultyString = sharedPreferences.getString("challengeDifficulty", "") ?:""
         val savedMinLevel = sharedPreferences.getInt("challengeMinLevel", 1)
+        val savedRerollDate = sharedPreferences.getString("rerollDate", "") ?: ""
+        val savedRerollUsed = sharedPreferences.getBoolean("rerollUsed", false)
 
         val savedTotalXp = sharedPreferences.getInt("totalXp", 0)
         val savedStrengthXp = sharedPreferences.getInt("strengthXp", 0)
         val savedWisdomXp = sharedPreferences.getInt("wisdomXp", 0)
         val savedHealthXp = sharedPreferences.getInt("healthXp", 0)
-        val savedDisciplineXp = sharedPreferences.getInt("disciplineXp", 0)
         val savedCharismaXp = sharedPreferences.getInt("charismaXp", 0)
 
         val savedTitleTemplate = sharedPreferences.getString("challengeTitleTemplate",null)
@@ -156,7 +229,6 @@ fun QuestApp() {
         strengthXp = savedStrengthXp
         wisdomXp = savedWisdomXp
         healthXp = savedHealthXp
-        disciplineXp = savedDisciplineXp
         charismaXp = savedCharismaXp
 
         val playerLevel = LevelingSystem.levelForXp(totalXp)
@@ -170,13 +242,15 @@ fun QuestApp() {
             savedDifficultyString.isNotEmpty()
         ) {
             try {
+                val savedStatType = parseSavedStatType(savedStatTypeString)
                 Challenge(
                     title = savedTitle,
                     titleTemplate = savedTitleTemplate,
                     baseCount = savedBaseCount,
                     countPerLevel = savedCountPerLevel,
                     xp = savedXp,
-                    statType = StatType.valueOf(savedStatTypeString),
+                    statType = savedStatType,
+                    pool = parseSavedQuestPool(savedPoolString, savedStatType),
                     difficulty = Difficulty.valueOf(savedDifficultyString),
                     minLevel = savedMinLevel
                 )
@@ -203,57 +277,34 @@ fun QuestApp() {
         }
 
         if (savedDate == todayString && savedChallenge != null) {
-            val statLevel = getStatLevel(savedChallenge.statType)
-
-            val finalTitle = if(!savedChallenge.titleTemplate.isNullOrBlank()){
-                val count = savedChallenge.baseCount + ((statLevel - 1) * savedChallenge.countPerLevel)
-                savedChallenge.titleTemplate.replace("{count}", count.toString())
-            }else {
-                savedChallenge.title
-            }
-            currentChallenge = savedChallenge.copy(title = finalTitle)
+            currentChallenge = prepareChallenge(savedChallenge)
             status = savedStatus
+            rerollUsed = savedRerollDate == todayString && savedRerollUsed
         } else {
             if (availableChallenges.isNotEmpty()) {
-                val baseChallenge = availableChallenges.random()
-
-                val statLevel = getStatLevel(baseChallenge.statType)
-
-                val finalTitle = if(!baseChallenge.titleTemplate.isNullOrBlank()){
-                    val count = baseChallenge.baseCount + ((statLevel - 1) * baseChallenge.countPerLevel)
-                    baseChallenge.titleTemplate.replace("{count}",count.toString())
-                }else{
-                    baseChallenge.title
-                }
-
-                val newChallenge = baseChallenge.copy(
-                    title = finalTitle
-                )
+                val newChallenge = prepareChallenge(selectChallenge(availableChallenges) ?: availableChallenges.random())
                 currentChallenge = newChallenge
                 status = "Not completed yet"
+                rerollUsed = false
+
+                saveCurrentChallenge(newChallenge, todayString)
 
                 sharedPreferences.edit {
-                    putString("date", todayString)
-                    putString("challengeTitle", newChallenge.title)
-                    putString("challengeTitleTemplate",newChallenge.titleTemplate)
-                    putInt("challengeBaseCount",newChallenge.baseCount)
-                    putInt("challengeCountPerLevel",newChallenge.countPerLevel)
-                    putInt("challengeXp", newChallenge.xp)
-                    putString("challengeStatType", newChallenge.statType.name)
-                    putString("challengeDifficulty", newChallenge.difficulty.name)
-                    putInt("challengeMinLevel", newChallenge.minLevel)
-                    putString("status", status)
+                    putString("rerollDate", todayString)
+                    putBoolean("rerollUsed", false)
                 }
             } else {
                 //If JSON Repo is empty
                 currentChallenge = Challenge(
                     title = "No Challenges Available",
                     xp = 0,
-                    statType = StatType.DISCIPLINE,
+                    statType = StatType.HEALTH,
+                    pool = QuestPool.HEALTH,
                     difficulty = Difficulty.EASY,
                     minLevel = 0
                 )
                 status = "Error loading challenges"
+                rerollUsed = true
             }
         }
     }
@@ -327,6 +378,7 @@ fun QuestApp() {
                     status = status,
                     streak = streak,
                     totalXp = totalXp,
+                    rerollUsed = rerollUsed,
                     onMarkComplete = {
                         val today = LocalDate.now()
                         val todayString = today.toString()
@@ -394,24 +446,6 @@ fun QuestApp() {
                                         )
                                     }
 
-                                    StatType.DISCIPLINE -> {
-                                        val oldXp = disciplineXp
-                                        val oldLevel = LevelingSystem.levelForXp(oldXp)
-                                        disciplineXp += challenge.xp
-                                        val newXp = disciplineXp
-                                        val newLevel = LevelingSystem.levelForXp(newXp)
-
-                                        rewardPopUpData = RewardPopUpData(
-                                            statLabel = "Discipline",
-                                            xpGained = challenge.xp,
-                                            oldXp = oldXp,
-                                            newXp = newXp,
-                                            oldLevel = oldLevel,
-                                            newLevel = newLevel,
-                                            barColor = Color(0xFF9C27B0)
-                                        )
-                                    }
-
                                     StatType.CHARISMA -> {
                                         val oldXp = charismaXp
                                         val oldLevel = LevelingSystem.levelForXp(oldXp)
@@ -455,8 +489,32 @@ fun QuestApp() {
                                 putInt("strengthXp", strengthXp)
                                 putInt("wisdomXp", wisdomXp)
                                 putInt("healthXp", healthXp)
-                                putInt("disciplineXp", disciplineXp)
                                 putInt("charismaXp", charismaXp)
+                            }
+                        }
+                    },
+                    onRerollQuest = {
+                        val todayString = LocalDate.now().toString()
+                        val playerLevel = LevelingSystem.levelForXp(totalXp)
+                        val availableChallenges =
+                            challenges.filter { challenge -> challenge.minLevel <= playerLevel }
+                        val oldTitle = currentChallenge?.titleTemplate ?: currentChallenge?.title
+                        val newChallenge = selectChallenge(
+                            availableChallenges = availableChallenges,
+                            avoidTitle = oldTitle
+                        )?.let { challenge -> prepareChallenge(challenge) }
+
+                        if (newChallenge != null && status != "Completed!" && !rerollUsed) {
+                            currentChallenge = newChallenge
+                            status = "Not completed yet"
+                            rerollUsed = true
+
+                            saveCurrentChallenge(newChallenge, todayString)
+
+                            sharedPreferences.edit {
+                                putString("status", status)
+                                putString("rerollDate", todayString)
+                                putBoolean("rerollUsed", true)
                             }
                         }
                     }
@@ -468,7 +526,6 @@ fun QuestApp() {
                     strengthXp = strengthXp,
                     wisdomXp = wisdomXp,
                     healthXp = healthXp,
-                    disciplineXp = disciplineXp,
                     charismaXp = charismaXp,
                     streak = streak
 
@@ -488,7 +545,6 @@ fun QuestApp() {
                         strengthXp = 0
                         wisdomXp = 0
                         healthXp = 0
-                        disciplineXp = 0
                         charismaXp = 0
 
                         sharedPreferences.edit{
@@ -496,7 +552,6 @@ fun QuestApp() {
                             putInt("strengthXp",0)
                             putInt("wisdomXp",0)
                             putInt("healthXp",0)
-                            putInt("disciplineXp",0)
                             putInt("charismaXp",0)
                         }
                     },
@@ -516,7 +571,6 @@ fun QuestApp() {
                         strengthXp = 0
                         wisdomXp = 0
                         healthXp = 0
-                        disciplineXp = 0
                         charismaXp = 0
                         skills = emptyList()
 
@@ -544,7 +598,6 @@ fun QuestApp() {
                                 StatType.STRENGTH -> strengthXp
                                 StatType.WISDOM -> wisdomXp
                                 StatType.HEALTH -> healthXp
-                                StatType.DISCIPLINE -> disciplineXp
                                 StatType.CHARISMA -> charismaXp
                             }
                             val oldLevel = LevelingSystem.levelForXp(oldXp)
@@ -555,7 +608,6 @@ fun QuestApp() {
                                 StatType.STRENGTH -> strengthXp += skillToComplete.xp
                                 StatType.WISDOM -> wisdomXp += skillToComplete.xp
                                 StatType.HEALTH -> healthXp += skillToComplete.xp
-                                StatType.DISCIPLINE -> disciplineXp += skillToComplete.xp
                                 StatType.CHARISMA -> charismaXp += skillToComplete.xp
                             }
 
@@ -577,7 +629,6 @@ fun QuestApp() {
                                 putInt("strengthXp", strengthXp)
                                 putInt("wisdomXp", wisdomXp)
                                 putInt("healthXp", healthXp)
-                                putInt("disciplineXp", disciplineXp)
                                 putInt("charismaXp", charismaXp)
                             }
 

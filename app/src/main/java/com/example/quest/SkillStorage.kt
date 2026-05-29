@@ -6,6 +6,7 @@ import org.json.JSONObject
 
 object SkillStorage {
     private const val SkillsKey = "skills"
+    private const val LegacyDiscipline = "DISCIPLINE"
 
     fun load(sharedPreferences: SharedPreferences): List<Skill> {
         val savedSkills = sharedPreferences.getString(SkillsKey, null) ?: return emptyList()
@@ -16,7 +17,7 @@ object SkillStorage {
                 Skill(
                     id = skillObject.getLong("id"),
                     name = skillObject.getString("name"),
-                    statType = StatType.valueOf(skillObject.getString("statType")),
+                    statType = parseStatType(skillObject.getString("statType")),
                     xp = skillObject.getInt("xp"),
                     recurrence = skillObject.optString("recurrence", "DAILY"),
                     lastCompletedDate = skillObject.optString("lastCompletedDate")
@@ -48,5 +49,13 @@ object SkillStorage {
         sharedPreferences.edit()
             .putString(SkillsKey, skillArray.toString())
             .apply()
+    }
+
+    private fun parseStatType(savedStatType: String): StatType {
+        return if (savedStatType == LegacyDiscipline) {
+            StatType.HEALTH
+        } else {
+            StatType.valueOf(savedStatType)
+        }
     }
 }

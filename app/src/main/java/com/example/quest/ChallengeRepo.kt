@@ -21,8 +21,10 @@ object ChallengeRepo{
             val countPerLevel = if(jsonObject.has("countPerLevel")) jsonObject.getInt("countPerLevel") else 0
             val xp = jsonObject.getInt("xp")
             val statTypeString = jsonObject.getString("statType")
+            val poolString = if (jsonObject.has("pool")) jsonObject.getString("pool") else statTypeString
             val difficultyString = jsonObject.getString("difficulty")
             val minLevel = jsonObject.getInt("minLevel")
+            val statType = StatType.valueOf(statTypeString)
 
             val challenge = Challenge(
                 title = title,
@@ -30,7 +32,8 @@ object ChallengeRepo{
                 baseCount = baseCount,
                 countPerLevel = countPerLevel,
                 xp = xp,
-                statType = StatType.valueOf(statTypeString),
+                statType = statType,
+                pool = QuestPool.valueOf(poolString),
                 difficulty = Difficulty.valueOf(difficultyString),
                 minLevel = minLevel
             )

@@ -33,11 +33,13 @@ fun StatsScreen(
     strengthXp: Int,
     wisdomXp: Int,
     healthXp: Int,
-    disciplineXp: Int,
     charismaXp: Int,
     streak: Int
 ) {
     val playerLevel = LevelingSystem.levelForXp(totalXp)
+    val disciplineProgress = LevelingSystem.progressToNextLevel(totalXp)
+    val disciplineXpIntoLevel = LevelingSystem.xpIntoCurrentLevel(totalXp)
+    val disciplineXpNeeded = LevelingSystem.xpNeededForNextLevel(totalXp)
     val scrollState = rememberScrollState()
 
     Column(
@@ -51,14 +53,14 @@ fun StatsScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "Character Stats",
+                text = "Discipline Level",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
             Text(
-                text = "Your attributes grow as you finish quests.",
+                text = "Your overall level grows whenever you complete quests and skills.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
             )
@@ -68,9 +70,52 @@ fun StatsScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            OverviewTile("Level", "$playerLevel", Modifier.weight(1f))
+            OverviewTile("Discipline", "Lv. $playerLevel", Modifier.weight(1f))
             OverviewTile("Total XP", "$totalXp", Modifier.weight(1f))
             OverviewTile("Streak", "$streak days", Modifier.weight(1f))
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = "Discipline Progress",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                LinearProgressIndicator(
+                    progress = { disciplineProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(50)),
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    gapSize = 0.dp,
+                    drawStopIndicator = {}
+                )
+
+                Text(
+                    text = if (disciplineXpNeeded == 0) {
+                        "Max level reached"
+                    } else {
+                        "$disciplineXpIntoLevel / $disciplineXpNeeded XP to next level"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
+                )
+            }
         }
 
         Card(
@@ -95,7 +140,6 @@ fun StatsScreen(
                 StatProgressRow("Strength", strengthXp, Color(0xFFE57373))
                 StatProgressRow("Wisdom", wisdomXp, Color(0xFF00AFC4))
                 StatProgressRow("Health", healthXp, Color(0xFF39A96B))
-                StatProgressRow("Discipline", disciplineXp, Color(0xFF8E6BBE))
                 StatProgressRow("Charisma", charismaXp, Color(0xFFC28B2C))
             }
         }
