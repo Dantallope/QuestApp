@@ -87,6 +87,7 @@ fun QuestApp() {
 
     var rewardPopUpData by remember { mutableStateOf<RewardPopUpData?>(null) }
     var rerollUsed by remember { mutableStateOf(false) }
+    var questPreference by remember { mutableStateOf(QuestPreference.BALANCED) }
 
     var totalXp by remember { mutableIntStateOf(0) }
     var strengthXp by remember { mutableIntStateOf(0) }
@@ -132,6 +133,14 @@ fun QuestApp() {
         }
     }
 
+    fun parseQuestPreference(savedPreference: String): QuestPreference {
+        return try {
+            QuestPreference.valueOf(savedPreference)
+        } catch (e: Exception) {
+            QuestPreference.BALANCED
+        }
+    }
+
     fun statColor(statType: StatType): Color {
         return when (statType) {
             StatType.STRENGTH -> Color(0xFFE57373)
@@ -147,7 +156,10 @@ fun QuestApp() {
     fun prepareChallenge(baseChallenge: Challenge): Challenge {
         val statLevel = getStatLevel(baseChallenge.statType)
         val finalTitle = if(!baseChallenge.titleTemplate.isNullOrBlank()){
-            val count = baseChallenge.baseCount + ((statLevel - 1) * baseChallenge.countPerLevel)
+            val rawCount = baseChallenge.baseCount + ((statLevel - 1) * baseChallenge.countPerLevel)
+            val count = baseChallenge.maxCount?.let { maxCount ->
+                rawCount.coerceAtMost(maxCount)
+            } ?: rawCount
             baseChallenge.titleTemplate.replace("{count}", count.toString())
         }else{
             baseChallenge.title
@@ -158,13 +170,23 @@ fun QuestApp() {
 
     fun selectChallenge(
         availableChallenges: List<Challenge>,
+        preference: QuestPreference,
         avoidTitle: String? = null
     ): Challenge? {
         if (availableChallenges.isEmpty()) return null
 
         val dailyPool = QuestPool.values()[LocalDate.now().dayOfYear % QuestPool.values().size]
+        val preferredChallenges = if (preference == QuestPreference.BALANCED) {
+            emptyList()
+        } else {
+            availableChallenges.filter { challenge -> challenge.statType.name == preference.name }
+        }
         val poolChallenges = availableChallenges.filter { challenge -> challenge.pool == dailyPool }
-        val firstPass = if (poolChallenges.isNotEmpty()) poolChallenges else availableChallenges
+        val firstPass = when {
+            preferredChallenges.isNotEmpty() -> preferredChallenges
+            poolChallenges.isNotEmpty() -> poolChallenges
+            else -> availableChallenges
+        }
         val rerollOptions = if (avoidTitle == null) {
             firstPass
         } else {
@@ -186,6 +208,7 @@ fun QuestApp() {
             putString("challengeTitleTemplate",challenge.titleTemplate)
             putInt("challengeBaseCount",challenge.baseCount)
             putInt("challengeCountPerLevel",challenge.countPerLevel)
+            putInt("challengeMaxCount", challenge.maxCount ?: 0)
             putInt("challengeXp", challenge.xp)
             putString("challengeStatType", challenge.statType.name)
             putString("challengePool", challenge.pool.name)
@@ -212,6 +235,7 @@ fun QuestApp() {
         val savedMinLevel = sharedPreferences.getInt("challengeMinLevel", 1)
         val savedRerollDate = sharedPreferences.getString("rerollDate", "") ?: ""
         val savedRerollUsed = sharedPreferences.getBoolean("rerollUsed", false)
+        val savedQuestPreference = sharedPreferences.getString("questPreference", "") ?: ""
 
         val savedTotalXp = sharedPreferences.getInt("totalXp", 0)
         val savedStrengthXp = sharedPreferences.getInt("strengthXp", 0)
@@ -222,8 +246,10 @@ fun QuestApp() {
         val savedTitleTemplate = sharedPreferences.getString("challengeTitleTemplate",null)
         val savedBaseCount = sharedPreferences.getInt("challengeBaseCount",0)
         val savedCountPerLevel = sharedPreferences.getInt("challengeCountPerLevel",0)
+        val savedMaxCount = sharedPreferences.getInt("challengeMaxCount",0).takeIf { it > 0 }
 
         skills = SkillStorage.load(sharedPreferences)
+        questPreference = parseQuestPreference(savedQuestPreference)
 
         totalXp = savedTotalXp
         strengthXp = savedStrengthXp
@@ -252,7 +278,8 @@ fun QuestApp() {
                     statType = savedStatType,
                     pool = parseSavedQuestPool(savedPoolString, savedStatType),
                     difficulty = Difficulty.valueOf(savedDifficultyString),
-                    minLevel = savedMinLevel
+                    minLevel = savedMinLevel,
+                    maxCount = savedMaxCount
                 )
             } catch (e: Exception) {
                 null
@@ -282,7 +309,12 @@ fun QuestApp() {
             rerollUsed = savedRerollDate == todayString && savedRerollUsed
         } else {
             if (availableChallenges.isNotEmpty()) {
-                val newChallenge = prepareChallenge(selectChallenge(availableChallenges) ?: availableChallenges.random())
+                val newChallenge = prepareChallenge(
+                    selectChallenge(
+                        availableChallenges = availableChallenges,
+                        preference = questPreference
+                    ) ?: availableChallenges.random()
+                )
                 currentChallenge = newChallenge
                 status = "Not completed yet"
                 rerollUsed = false
@@ -301,7 +333,8 @@ fun QuestApp() {
                     statType = StatType.HEALTH,
                     pool = QuestPool.HEALTH,
                     difficulty = Difficulty.EASY,
-                    minLevel = 0
+                    minLevel = 0,
+                    maxCount = null
                 )
                 status = "Error loading challenges"
                 rerollUsed = true
@@ -379,6 +412,7 @@ fun QuestApp() {
                     streak = streak,
                     totalXp = totalXp,
                     rerollUsed = rerollUsed,
+                    questPreference = questPreference,
                     onMarkComplete = {
                         val today = LocalDate.now()
                         val todayString = today.toString()
@@ -501,6 +535,7 @@ fun QuestApp() {
                         val oldTitle = currentChallenge?.titleTemplate ?: currentChallenge?.title
                         val newChallenge = selectChallenge(
                             availableChallenges = availableChallenges,
+                            preference = questPreference,
                             avoidTitle = oldTitle
                         )?.let { challenge -> prepareChallenge(challenge) }
 
@@ -516,6 +551,12 @@ fun QuestApp() {
                                 putString("rerollDate", todayString)
                                 putBoolean("rerollUsed", true)
                             }
+                        }
+                    },
+                    onQuestPreferenceSelected = { preference ->
+                        questPreference = preference
+                        sharedPreferences.edit {
+                            putString("questPreference", preference.name)
                         }
                     }
                 )
@@ -573,6 +614,8 @@ fun QuestApp() {
                         healthXp = 0
                         charismaXp = 0
                         skills = emptyList()
+                        questPreference = QuestPreference.BALANCED
+                        rerollUsed = false
 
                         sharedPreferences.edit {
                             clear()

@@ -9,5 +9,6 @@ data class Challenge(
     val difficulty: Difficulty,
     val minLevel: Int,
     val baseCount: Int = 0,
-    val countPerLevel: Int = 0
+    val countPerLevel: Int = 0,
+    val maxCount: Int? = null
 )

@@ -9,17 +9,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.quest.Challenge
 import com.example.quest.LevelingSystem
+import com.example.quest.QuestPreference
 
 @Composable
 fun QuestScreen(
@@ -36,8 +45,10 @@ fun QuestScreen(
     streak: Int,
     totalXp: Int,
     rerollUsed: Boolean,
+    questPreference: QuestPreference,
     onMarkComplete: () -> Unit,
     onRerollQuest: () -> Unit,
+    onQuestPreferenceSelected: (QuestPreference) -> Unit,
 ) {
     val statName = currentChallenge?.statType?.name
         ?.lowercase()
@@ -48,14 +59,16 @@ fun QuestScreen(
     val levelProgress = LevelingSystem.progressToNextLevel(totalXp)
     val isComplete = status == "Completed!"
     val canReroll = !isComplete && !rerollUsed && currentChallenge != null
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(innerPadding)
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
@@ -93,6 +106,11 @@ fun QuestScreen(
             )
         }
 
+        QuestPreferenceSelector(
+            selectedPreference = questPreference,
+            onPreferenceSelected = onQuestPreferenceSelected
+        )
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
@@ -102,8 +120,8 @@ fun QuestScreen(
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Surface(
                     shape = RoundedCornerShape(50),
@@ -240,6 +258,64 @@ fun QuestScreen(
 }
 
 @Composable
+private fun QuestPreferenceSelector(
+    selectedPreference: QuestPreference,
+    onPreferenceSelected: (QuestPreference) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = "Quest Focus",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f)
+                )
+                Text(
+                    text = selectedPreference.displayName(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            OutlinedButton(
+                onClick = { expanded = true },
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Change")
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                QuestPreference.values().forEach { preference ->
+                    DropdownMenuItem(
+                        text = { Text(preference.displayName()) },
+                        onClick = {
+                            onPreferenceSelected(preference)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun SummaryTile(
     label: String,
     value: String,
@@ -267,6 +343,10 @@ private fun SummaryTile(
             )
         }
     }
+}
+
+private fun QuestPreference.displayName(): String {
+    return name.lowercase().replaceFirstChar { it.uppercase() }
 }
 
 @Composable
